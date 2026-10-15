@@ -117,10 +117,27 @@
     </section>
 
 
-    <!-- ===== Settings (backup only for now) ===== -->
-    <section class="screen screen--plain" data-screen="settings" aria-label="Settings">
+    <!-- ===== Settings ===== -->
+    <section class="screen screen--plain scrolls" data-screen="settings" aria-label="Settings">
       <button class="btn btn--small" type="button" data-go="menu">‹ Back</button>
       <h2 class="screen-title">Settings</h2>
+
+      <h3 class="settings-heading">Timing</h3>
+      <label class="slider-label" for="latency-slider">Audio latency offset <output id="latency-value">0 ms</output></label>
+      <input id="latency-slider" class="slider" type="range" min="-200" max="200" step="5" value="0">
+      <p class="settings-note">Positive values mean "my taps feel late": notes arrive later to match you. Negative values mean "my taps feel early".</p>
+      <button class="btn" type="button" data-go="calibrate">Test timing</button>
+
+      <h3 class="settings-heading">Audio</h3>
+      <label class="slider-label" for="music-slider">Music volume <output id="music-value">80%</output></label>
+      <input id="music-slider" class="slider" type="range" min="0" max="100" step="5" value="80">
+      <label class="slider-label" for="sfx-slider">Sound effects volume <output id="sfx-value">70%</output></label>
+      <input id="sfx-slider" class="slider" type="range" min="0" max="100" step="5" value="70">
+
+      <h3 class="settings-heading">Haptics</h3>
+      <button id="haptics-toggle" class="btn" type="button" role="switch" aria-checked="true">Vibration: On</button>
+      <p id="haptics-note" class="settings-note" hidden>Vibration isn't supported on this device.</p>
+
       <h3 class="settings-heading">Backup</h3>
       <p class="settings-note">Saves live in this browser. Export a copy so you don't lose your Bank and songs if browser data is cleared.</p>
       <button id="export-save" class="btn" type="button">Export Save</button>
@@ -130,6 +147,22 @@
       <button id="reset-progress" class="btn btn--danger" type="button">Reset Progress</button>
       <p id="settings-status" class="status" role="status"></p>
     </section>
+
+    <!-- ===== Timing test (calibration) ===== -->
+    <section class="screen screen--plain" data-screen="calibrate" aria-label="Timing test">
+      <button class="btn btn--small" type="button" data-go="settings">‹ Back</button>
+      <h2 class="screen-title">Test timing</h2>
+      <p class="settings-note">Tap anywhere (or press Space) just as the tile reaches the line, in time with the click. 12 taps.</p>
+      <p id="cal-sound-warning" class="settings-note" hidden>Sound is off, so there is no click. Follow the tile.</p>
+      <div id="cal-stage" class="cal-stage"><canvas id="cal-canvas"></canvas></div>
+      <p id="cal-count" class="status" role="status">Taps: 0 / 12</p>
+      <div id="cal-result" class="cal-result" hidden>
+        <p id="cal-average" class="cal-average"></p>
+        <button id="cal-use" class="btn btn--primary" type="button">Use this offset</button>
+        <button id="cal-retry" class="btn" type="button">Try again</button>
+      </div>
+    </section>
+
 
 
     <!-- ===== Gameplay (canvas + DOM pause controls) ===== -->
@@ -152,7 +185,7 @@
       <h2 class="screen-title">Song Complete</h2>
       <p id="res-song" class="res-song"></p>
       <p id="res-new-high" class="res-high" hidden>New High Score!</p>
-      <p id="res-stars" class="res-stars" role="img"></p>
+      <p id="res-stars" class="res-stars" role="img"><span class="star">★</span><span class="star">★</span><span class="star">★</span></p>
       <p class="res-score" id="res-score">0</p>
       <p class="res-reward">+<strong id="res-earned">0</strong> coins · Bank <strong id="res-bank">0</strong></p>
       <dl class="res-stats">

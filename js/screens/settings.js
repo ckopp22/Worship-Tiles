@@ -1,26 +1,56 @@
-// Settings: save backup (Export / Import) and Reset Progress (MDD 4.8). Haptics and calibration come in Phase 6.
+// Settings: timing offset, volumes, haptics, save backup (Export / Import) and Reset Progress (MDD 4.8).
 
-import { exportSave, parseSave, replaceState } from "../state.js";
+import { state, subscribe, setSetting, exportSave, parseSave, replaceState } from "../state.js";
 import { confirmDialog } from "../ui.js";
+import { hapticsSupported } from "../haptics.js";
 
-let statusEl;
+let statusEl, latency, music, sfx, hapticsBtn;
+const $ = (id) => document.getElementById(id);
 
 export function init() {
-  statusEl = document.getElementById("settings-status");
-  const fileInput = document.getElementById("import-file");
+  statusEl = $("settings-status");
+  latency = $("latency-slider");
+  music = $("music-slider");
+  sfx = $("sfx-slider");
+  hapticsBtn = $("haptics-toggle");
+  const fileInput = $("import-file");
 
-  document.getElementById("export-save").addEventListener("click", download);
-  document.getElementById("import-save").addEventListener("click", () => fileInput.click());
+  latency.addEventListener("input", () => setSetting("latencyOffsetMs", Number(latency.value)));
+  music.addEventListener("input", () => setSetting("musicVolume", Number(music.value) / 100));
+  sfx.addEventListener("input", () => setSetting("sfxVolume", Number(sfx.value) / 100));
+
+  // Vibration is not available on iPhone Safari: hide the toggle and say so.
+  hapticsBtn.hidden = !hapticsSupported;
+  $("haptics-note").hidden = hapticsSupported;
+  hapticsBtn.addEventListener("click", () => setSetting("hapticsEnabled", !state.settings.hapticsEnabled));
+
+  $("export-save").addEventListener("click", download);
+  $("import-save").addEventListener("click", () => fileInput.click());
   fileInput.addEventListener("change", async () => {
     const file = fileInput.files[0];
     fileInput.value = ""; // allow picking the same file again
     if (file) await importFile(file);
   });
-  document.getElementById("reset-progress").addEventListener("click", reset);
+  $("reset-progress").addEventListener("click", reset);
+  subscribe(render);
+  render();
 }
 
 export function enter() {
   statusEl.textContent = "";
+  render();
+}
+
+function render() {
+  const s = state.settings;
+  latency.value = s.latencyOffsetMs;
+  $("latency-value").textContent = `${s.latencyOffsetMs > 0 ? "+" : ""}${s.latencyOffsetMs} ms`;
+  music.value = Math.round(s.musicVolume * 100);
+  $("music-value").textContent = `${music.value}%`;
+  sfx.value = Math.round(s.sfxVolume * 100);
+  $("sfx-value").textContent = `${sfx.value}%`;
+  hapticsBtn.setAttribute("aria-checked", String(s.hapticsEnabled));
+  hapticsBtn.textContent = `Vibration: ${s.hapticsEnabled ? "On" : "Off"}`;
 }
 
 function download() {

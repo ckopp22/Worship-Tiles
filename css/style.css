@@ -349,6 +349,8 @@ button.song-row { width: 100%; text-align: left; align-items: flex-start; flex-d
 .sheet-stats dt { font-size: .75em; opacity: .7; }
 .sheet-stats dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
 .res-stars { margin: 0; font-size: 1.8em; letter-spacing: .15em; color: var(--gold); }
+.star { display: inline-block; opacity: .25; transform: scale(.5); transition: opacity .3s, transform .35s cubic-bezier(.2, 1.6, .4, 1); }
+.star.is-on { opacity: 1; transform: scale(1); }
 .res-reward { margin: 0; font-size: .9em; opacity: .8; }
 .res-stats { grid-template-columns: 1fr 1fr 1fr; }
 .res-stats dd { font-size: 1.2em; }
@@ -378,3 +380,27 @@ button.song-row { width: 100%; text-align: left; align-items: flex-start; flex-d
 .res-high { margin: 0; padding: .3em .9em; border-radius: 2em; font-weight: 700; color: #2a1c05; background: linear-gradient(180deg, #ffe2a0, var(--gold-deep)); }
 .res-high[hidden] { display: none; }
 .res-reward strong { color: var(--gold); font-variant-numeric: tabular-nums; }
+
+/* ---------- Polish: sliders, calibration, tap targets, contrast (Phase 6) ---------- */
+.slider-label { align-self: stretch; display: flex; justify-content: space-between; align-items: baseline; font-weight: 600; }
+.slider-label output { color: var(--gold); font-variant-numeric: tabular-nums; }
+.slider { width: 100%; height: max(44px, 2.75em); margin: 0; accent-color: var(--gold); touch-action: pan-y; cursor: pointer; }
+.cal-stage { flex: 1; min-height: 0; width: 100%; border: 1px solid rgba(242, 196, 96, .3); border-radius: 1em; overflow: hidden; touch-action: none; position: relative; }
+.cal-stage canvas { position: absolute; inset: 0; display: block; }
+.cal-result { width: 100%; display: flex; flex-direction: column; align-items: center; gap: .6em; }
+.cal-average { margin: 0; text-align: center; font-weight: 600; }
+
+/* every control is at least 44x44 CSS px, even when the stage is scaled down on small phones */
+.btn { min-height: max(44px, 3.4em); }
+.btn--small, .seg { min-height: max(44px, 2.75em); min-width: 44px; }
+.icon-btn { min-width: max(44px, 2.75em); height: max(44px, 2.75em); }
+.song-row.locked > div { opacity: .75; }
+.btn:disabled { opacity: .7; }
+.btn--danger { color: #f6c4c4; }
+
+@media (prefers-reduced-motion: reduce) {
+  .star { transition: none; }
+}
+.scrolls > * { flex-shrink: 0 } /* scrolling screens keep each control's full size instead of squeezing it */
+.slider { min-height: max(44px, 2.75em); }
+.cal-result[hidden] { display: none; }

@@ -1,15 +1,17 @@
 // Boot, screen router, stage scaling.
 
 import { state } from "./state.js";
-import { installUnlockOnFirstTap } from "./audio.js";
+import { installUnlockOnFirstTap, startMenuMusic, stopMenuMusic } from "./audio.js";
 import * as menu from "./screens/menu.js";
 import * as howto from "./screens/howto.js";
 import * as library from "./screens/library.js";
 import * as store from "./screens/store.js";
 import * as settings from "./screens/settings.js";
 import * as results from "./screens/results.js";
+import * as calibrate from "./screens/calibrate.js";
 import * as game from "./game/game.js";
 
+const MUSIC_SCREENS = new Set(["menu", "howto", "library", "store", "settings"]); // menu music plays here
 const stage = document.getElementById("stage");
 const screens = {};
 let current = null;
@@ -23,12 +25,13 @@ export function go(name, data) {
   }
   current = name;
   screens[name].el.classList.add("is-active");
+  if (MUSIC_SCREENS.has(name)) startMenuMusic(); else stopMenuMusic();
   screens[name].mod?.enter?.(data);
 }
 
 const app = { go };
 
-const modules = { menu, howto, library, store, settings, results, gameplay: game };
+const modules = { menu, howto, library, store, settings, results, calibrate, gameplay: game };
 document.querySelectorAll("[data-screen]").forEach((el) => {
   const name = el.dataset.screen;
   screens[name] = { el, mod: modules[name] };

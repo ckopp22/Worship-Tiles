@@ -2,7 +2,7 @@
 // AudioContext hardware clock (never frame deltas or Date.now()), so visuals can't drift from the music.
 // Suspending the context (pause) freezes this clock automatically.
 
-import { getContext, getMasterGain, unlock } from "../audio.js";
+import { getContext, getMusicGain, unlock } from "../audio.js";
 import { state } from "../state.js";
 
 export const COUNT_IN_BEATS = 3;
@@ -25,7 +25,7 @@ export async function start(buffer, bpm) {
   songDuration = buffer.duration;
   source = ctx.createBufferSource();
   source.buffer = buffer;
-  source.connect(getMasterGain()); // master gain mutes the song when Sound is off; the clock keeps running
+  source.connect(getMusicGain()); // music gain: slider + Sound toggle control it; the clock keeps running when muted
   audioStart = ctx.currentTime + COUNT_IN_BEATS * secPerBeat;
   source.start(audioStart);
 }

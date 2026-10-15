@@ -1,14 +1,23 @@
-// Web Audio foundation: AudioContext (unlocked on first tap), master gain tied to the sound toggle.
+// Web Audio foundation: AudioContext (unlocked on first tap) and the gain graph.
+//   songs + menu music -> musicGain --\
+//   SFX / jingles      -> sfxGain   ---+-> master (Sound toggle: 0 or 1) -> speakers
+// Music and SFX levels come from the Settings sliders; SFX_BASE keeps hit sounds under the hymn.
 
 import { state, subscribe } from "./state.js";
 
-let ctx = null;
-let master = null;
+const SFX_BASE = 0.6;
+const MENU_MUSIC_URL = "songs/audio/menu.mp3";
 
-function applySound() {
+let ctx = null;
+let master = null, musicGain = null, sfxGain = null;
+
+function applyGains() {
   if (!master) return;
-  // short ramp avoids clicks when toggling
-  master.gain.setTargetAtTime(state.settings.soundEnabled ? 1 : 0, ctx.currentTime, 0.015);
+  const t = ctx.currentTime;
+  // short ramps avoid clicks when toggling or dragging a slider
+  master.gain.setTargetAtTime(state.settings.soundEnabled ? 1 : 0, t, 0.015);
+  musicGain.gain.setTargetAtTime(state.settings.musicVolume, t, 0.02);
+  sfxGain.gain.setTargetAtTime(state.settings.sfxVolume * SFX_BASE, t, 0.02);
 }
 
 /** Create/resume the AudioContext. Must be called from a user gesture (iOS). */
@@ -18,13 +27,18 @@ export function unlock() {
   if (!ctx) {
     ctx = new AC();
     master = ctx.createGain();
+    musicGain = ctx.createGain();
+    sfxGain = ctx.createGain();
+    musicGain.connect(master);
+    sfxGain.connect(master);
     master.connect(ctx.destination);
-    applySound();
+    applyGains();
     // iOS: playing a silent buffer inside the gesture fully unlocks output
     const src = ctx.createBufferSource();
     src.buffer = ctx.createBuffer(1, 1, 22050);
     src.connect(ctx.destination);
     src.start(0);
+    if (menuMusicWanted) startMenuMusic();
   }
   if (ctx.state !== "running") ctx.resume().catch(() => {});
 }
@@ -40,19 +54,57 @@ export function installUnlockOnFirstTap() {
 }
 
 export const getContext = () => ctx;
-/** Route all sound (music, SFX, song audio) through this node so the toggle mutes everything. */
-export const getMasterGain = () => master;
+export const getMasterGain = () => master; // the Sound toggle node (exposed for tests)
+/** Songs (and menu music) connect here so the Music slider and Sound toggle control them. */
+export const getMusicGain = () => musicGain;
 
-subscribe(applySound);
+subscribe(applyGains);
 
-// Menu music hook: no audio files yet. Later, load a buffer and loop it through the master gain.
-export function startMenuMusic() {}
-export function stopMenuMusic() {}
+// ---- Menu music: plays songs/audio/menu.mp3 in a loop if that file exists; otherwise does nothing ----
+let menuMusicWanted = false;
+let menuBuffer = null;     // decoded loop
+let menuMissing = false;   // file not found: never ask again
+let menuSource = null;
+let menuLoading = false;
 
-// ---- Sound effects (oscillators, routed through the master gain so the toggle mutes them) ----
-function blip(type, hz, endHz, dur, peak) {
+export async function startMenuMusic() {
+  menuMusicWanted = true;
+  if (!ctx || menuSource || menuMissing || menuLoading) return;
+  try {
+    if (!menuBuffer) {
+      menuLoading = true;
+      const res = await fetch(MENU_MUSIC_URL);
+      if (!res.ok) { menuMissing = true; return; }
+      menuBuffer = await ctx.decodeAudioData(await res.arrayBuffer());
+    }
+  } catch {
+    menuMissing = true;
+    return;
+  } finally {
+    menuLoading = false;
+  }
+  if (!menuMusicWanted || menuSource) return; // stopped while loading
+  menuSource = ctx.createBufferSource();
+  menuSource.buffer = menuBuffer;
+  menuSource.loop = true;
+  menuSource.connect(musicGain);
+  menuSource.start();
+}
+
+export function stopMenuMusic() {
+  menuMusicWanted = false;
+  if (!menuSource) return;
+  try { menuSource.stop(); } catch { /* already stopped */ }
+  menuSource.disconnect();
+  menuSource = null;
+}
+
+export const isMenuMusicPlaying = () => menuSource !== null;
+
+// ---- Sound effects (oscillators, routed through the SFX gain) ----
+function blip(type, hz, endHz, dur, peak, when = 0) {
   if (!ctx || ctx.state !== "running") return;
-  const t = ctx.currentTime;
+  const t = Math.max(ctx.currentTime, when);
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
   osc.type = type;
@@ -60,7 +112,7 @@ function blip(type, hz, endHz, dur, peak) {
   if (endHz !== hz) osc.frequency.exponentialRampToValueAtTime(endHz, t + dur);
   gain.gain.setValueAtTime(peak, t);
   gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  osc.connect(gain).connect(master);
+  osc.connect(gain).connect(sfxGain);
   osc.start(t);
   osc.stop(t + dur + 0.02);
 }
@@ -75,4 +127,17 @@ export function playHit(grade) {
 /** Subtle low tone on a miss. */
 export function playMiss() {
   blip("triangle", 190, 140, 0.14, 0.06);
+}
+
+/** Metronome click at a precise context time (timing test). */
+export function scheduleClick(when) {
+  blip("square", 1000, 1000, 0.04, 0.18, when);
+}
+
+/** Short uplifting jingle for the Results screen: a rising C major arpeggio ending on a held chord. */
+export function playJingle() {
+  if (!ctx) return;
+  const t = ctx.currentTime + 0.05;
+  [523.25, 659.25, 783.99, 1046.5].forEach((hz, i) => blip("sine", hz, hz, 0.45, 0.14, t + i * 0.13));
+  [523.25, 659.25, 783.99, 1046.5].forEach((hz) => blip("triangle", hz, hz, 1.0, 0.07, t + 0.52));
 }

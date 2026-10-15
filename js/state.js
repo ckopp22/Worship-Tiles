@@ -4,7 +4,7 @@ const STORAGE_KEY = "worshipTiles.save.v1";
 const VERSION = 1;
 
 const DEFAULTS = {
-  settings: { soundEnabled: true, hapticsEnabled: true, latencyOffsetMs: 0 },
+  settings: { soundEnabled: true, hapticsEnabled: true, latencyOffsetMs: 0, musicVolume: 0.8, sfxVolume: 0.7 },
   profile: {
     bank: 0,
     ownedSongIds: [], // starter songs are granted once the catalog exists (Phase 4)
@@ -13,6 +13,9 @@ const DEFAULTS = {
     hasSeenTutorial: false,
   },
 };
+
+// Added after the first release: older saves and exports may lack them, so they are optional on import.
+const OPTIONAL_KEYS = new Set(["musicVolume", "sfxVolume"]);
 
 const isObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
 const clone = (v) => JSON.parse(JSON.stringify(v));
@@ -35,6 +38,8 @@ function sanitize(raw) {
   }
   const s = out.settings, p = out.profile;
   s.latencyOffsetMs = Math.max(-200, Math.min(200, Math.round(s.latencyOffsetMs)));
+  s.musicVolume = Math.max(0, Math.min(1, s.musicVolume));
+  s.sfxVolume = Math.max(0, Math.min(1, s.sfxVolume));
   p.bank = Math.max(0, Math.floor(p.bank));
   p.ownedSongIds = p.ownedSongIds.filter((id) => typeof id === "string");
   return out;
@@ -128,6 +133,7 @@ export function parseSave(text) {
   if (raw.version !== VERSION) return { error: `Unsupported save version (${raw.version}).` };
   for (const section of ["settings", "profile"]) {
     for (const [key, def] of Object.entries(DEFAULTS[section])) {
+      if (OPTIONAL_KEYS.has(key) && raw[section][key] === undefined) continue;
       if (!matchesType(def, raw[section][key])) return { error: `The save is missing or has a bad value for ${section}.${key}.` };
     }
   }

@@ -11,6 +11,9 @@ import { Judge, maxScore } from "./judge.js";
 import { DifficultyConfig, starsFor, bankReward } from "./difficulty.js";
 import { createInput } from "./input.js";
 import * as view from "./renderer.js";
+import { hitPulse, holdPulse } from "../haptics.js";
+
+const COMBO_MILESTONES = new Set([10, 25, 50]);
 
 const RESUME_COUNTDOWN_MS = 3000;
 
@@ -20,6 +23,7 @@ let token = 0;         // invalidates async work if the player leaves mid-load
 let raf = 0;
 let song = null, difficulty = "easy", field = null, judge = null;
 let resumeAt = 0;
+let prevCombo = 0;
 
 // ======================= setup =======================
 
@@ -81,6 +85,7 @@ async function startRun(my) {
   view.setScrollSpeed(DifficultyConfig[difficulty].scrollSpeed);
   view.setSongDuration(song.buffer.duration);
   view.bindRun(field, judge);
+  prevCombo = 0;
   loadingEl.hidden = false;
   try {
     await conductor.start(song.buffer, song.bpm);
@@ -184,16 +189,20 @@ function onEvent(type, note, key) {
       if (key === "miss") playMiss();
       else {
         playHit(key);
-        if (key === "perfect" || key === "great") view.spawnBurst(view.laneX(note.lane), t);
+        hitPulse();
+        if (key === "good") view.spawnGlow(view.laneX(note.lane), t);
+        else view.spawnBurst(view.laneX(note.lane), t);
       }
       break;
     case "tick":
       view.spawnLabel("tick", view.laneX(note.lane), t, 0);
       playHit(key);
+      hitPulse();
       break;
     case "bonus":
-      view.spawnLabel(key, key === "holdComplete" ? view.laneX(note.lane) : mid, t, key === "chord" || key === "double" ? 1 : 0);
+      view.spawnLabel(key, key === "holdComplete" ? view.laneX(note.lane) : mid, t, key === "chordHold" ? 2 : 1); // stack above the grade text
       view.spawnBurst(key === "holdComplete" ? view.laneX(note.lane) : mid, t);
+      if (key === "holdComplete") holdPulse();
       break;
     case "break":
       playMiss();
@@ -209,6 +218,10 @@ function frame() {
   const t = conductor.songTime();
   if (runState === "playing") {
     judge.update(t);
+    if (judge.combo !== prevCombo) {
+      if (judge.combo > prevCombo && COMBO_MILESTONES.has(judge.combo)) view.showBanner(`${judge.combo} combo!`, t);
+      prevCombo = judge.combo;
+    }
     if (t >= conductor.duration()) { finish(); return; }
   }
   let n = 0, frac = 0;

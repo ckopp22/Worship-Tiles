@@ -22,6 +22,7 @@ const LABELS = {
 };
 const TEXT_LIFE = 0.7, BURST_LIFE = 0.45, FLASH_LIFE = 0.25;
 const MAX_TEXTS = 10, MAX_PARTICLES = 128, BURST_COUNT = 10;
+const MAX_GLOWS = 6, GLOW_LIFE = 0.4, BANNER_LIFE = 1.2, MISS_FADE = 0.8, MOTE_COUNT = 26;
 
 let canvas, g, probe;
 let W = 0, H = 0, dpr = 1, safeTop = 0, safeBottom = 0;
@@ -39,6 +40,15 @@ const laneFlash = new Array(LANE_COUNT).fill(-10);
 const texts = Array.from({ length: MAX_TEXTS }, () => ({ on: false, label: null, x: 0, t0: 0, level: 0 }));
 const particles = Array.from({ length: MAX_PARTICLES }, () => ({ on: false, x: 0, y: 0, vx: 0, vy: 0, t0: 0 }));
 let textNext = 0, particleNext = 0;
+
+const glows = Array.from({ length: MAX_GLOWS }, () => ({ on: false, x: 0, t0: 0 }));
+let glowNext = 0, glowCanvas = null, glowSize = 0;
+const banner = { on: false, text: "", t0: 0 };
+
+// drifting gold dust: fixed fractions (no randomness), positions computed from song time each frame
+const motes = Array.from({ length: MOTE_COUNT }, (_, i) => ({
+  fx: (i * 0.618034) % 1, fy: (i * 0.381966 + 0.13) % 1, speed: 6 + (i % 5) * 3, r: 1 + (i % 3) * 0.6, phase: i,
+}));
 
 // ======================= setup =======================
 
@@ -91,6 +101,8 @@ export function bindRun(fieldRef, judgeRef) {
   laneFlash.fill(-10);
   texts.forEach((x) => (x.on = false));
   particles.forEach((p) => (p.on = false));
+  glows.forEach((x) => (x.on = false));
+  banner.on = false;
 }
 
 function makeLayer(w, h) {
@@ -153,6 +165,16 @@ function buildBackground() {
   fg.addColorStop(1, "rgba(242,196,96,.4)");
   fx.fillStyle = fg;
   fx.fillRect(0, 0, laneW, flashH);
+
+  // soft round glow for Good hits
+  glowSize = laneW * 1.3;
+  let gx;
+  [glowCanvas, gx] = makeLayer(glowSize, glowSize);
+  const rg = gx.createRadialGradient(glowSize / 2, glowSize / 2, 0, glowSize / 2, glowSize / 2, glowSize / 2);
+  rg.addColorStop(0, "rgba(159,195,255,.55)");
+  rg.addColorStop(1, "rgba(159,195,255,0)");
+  gx.fillStyle = rg;
+  gx.fillRect(0, 0, glowSize, glowSize);
 }
 
 /** One glowing rounded tile per lane, plus a "2" variant for double-taps. */
@@ -211,6 +233,19 @@ export function spawnBurst(x, t) {
   }
 }
 
+/** Gentle glow on the hit line (Good hits). */
+export function spawnGlow(x, t) {
+  const slot = glows[glowNext++ % MAX_GLOWS];
+  slot.on = true; slot.x = x; slot.t0 = t;
+}
+
+/** Brief banner such as "10 combo!". */
+export function showBanner(text, t) {
+  banner.on = true; banner.text = text; banner.t0 = t;
+}
+
+export const activeParticleCount = () => particles.reduce((n, p) => n + (p.on ? 1 : 0), 0);
+
 export const laneX = (lane) => (lane + 0.5) * laneW;
 
 // ======================= drawing =======================
@@ -218,11 +253,25 @@ export const laneX = (lane) => (lane + 0.5) * laneW;
 export function draw(t, bigNumber, bigFrac) {
   g.setTransform(dpr, 0, 0, dpr, 0, 0);
   g.drawImage(bgCanvas, 0, 0, W, H);
+  if (!reduceMotion.matches) drawMotes(t);
   drawFlashes(t);
   drawNotes(t);
   drawEffects(t);
   drawHud(t);
   if (bigNumber) drawBigNumber(bigNumber, bigFrac);
+}
+
+function drawMotes(t) {
+  g.fillStyle = "#ffe2a0";
+  for (let i = 0; i < MOTE_COUNT; i++) {
+    const m = motes[i];
+    const y = (((m.fy * H - t * m.speed) % H) + H) % H;
+    g.globalAlpha = 0.12 + 0.12 * Math.sin(t * 0.8 + m.phase);
+    g.beginPath();
+    g.arc(m.fx * W + Math.sin(t * 0.3 + m.phase) * 10, y, m.r, 0, Math.PI * 2);
+    g.fill();
+  }
+  g.globalAlpha = 1;
 }
 
 function drawFlashes(t) {
@@ -234,6 +283,9 @@ function drawFlashes(t) {
   }
   g.globalAlpha = 1;
 }
+
+/** A missed tile quietly fades out instead of lingering. */
+const missFade = (n, t) => Math.max(0, 1 - (t - n.hitT) / MISS_FADE);
 
 /** Y of a tile's head: held holds stay pinned to the hit line while their body shrinks. */
 const headY = (n, t) => (n.state === NoteState.HELD ? hitY : hitY - (n.time - t) * speed);
@@ -268,8 +320,9 @@ function drawNotes(t) {
       const tailY = hitY - (n.end - t) * speed;
       if (tailY >= y) continue;
       const held = n.state === NoteState.HELD;
-      const dim = n.state === NoteState.MISSED || n.state === NoteState.BROKEN;
-      const a = dim ? 0.25 : 1;
+      const missed = n.state === NoteState.MISSED;
+      const dim = missed || n.state === NoteState.BROKEN;
+      const a = missed ? 0.3 * missFade(n, t) : dim ? 0.25 : 1;
       const cx = laneX(n.lane), bw = tileW * 0.6;
       g.fillStyle = TILE_COLORS[n.lane];
       g.globalAlpha = a * (held ? 0.22 + 0.2 * pulse : 0.18);       // soft glow
@@ -292,9 +345,11 @@ function drawNotes(t) {
     const n = notes[i];
     if ((n.time - t) * speed > hitY + tileH) break;
     if (n.state === NoteState.HIT) continue;
-    const dim = n.state === NoteState.MISSED || n.state === NoteState.BROKEN;
     const held = n.state === NoteState.HELD;
-    g.globalAlpha = dim ? 0.3 : held ? 0.85 + 0.15 * pulse : 1;
+    g.globalAlpha = n.state === NoteState.MISSED ? 0.4 * missFade(n, t)
+      : n.state === NoteState.BROKEN ? 0.3
+      : held ? 0.85 + 0.15 * pulse : 1;
+    if (g.globalAlpha <= 0) continue;
     const sprite = (n.kind === Kind.DOUBLE ? doubleSprites : tileSprites)[n.lane];
     g.drawImage(sprite, n.lane * laneW + (laneW - sw) / 2, headY(n, t) - sh / 2, sw, sh);
   }
@@ -314,6 +369,15 @@ function drawEffects(t) {
     g.arc(p.x + p.vx * age, p.y + p.vy * age + 260 * age * age, 3, 0, Math.PI * 2);
     g.fill();
   }
+  for (let i = 0; i < MAX_GLOWS; i++) {
+    const x = glows[i];
+    if (!x.on) continue;
+    const age = t - x.t0;
+    if (age > GLOW_LIFE) { x.on = false; continue; }
+    if (age < 0) continue;
+    g.globalAlpha = 1 - age / GLOW_LIFE;
+    g.drawImage(glowCanvas, x.x - glowSize / 2, hitY - glowSize / 2, glowSize, glowSize);
+  }
   g.textAlign = "center";
   g.font = `700 19px ${SERIF}`;
   for (let i = 0; i < MAX_TEXTS; i++) {
@@ -328,6 +392,19 @@ function drawEffects(t) {
     g.fillText(x.label.text, cx, hitY - 36 - x.level * 26 - age * 40);
   }
   g.globalAlpha = 1;
+  if (banner.on) {
+    const age = t - banner.t0;
+    if (age > BANNER_LIFE) banner.on = false;
+    else if (age >= 0) {
+      const pop = age < 0.15 ? 0.8 + (age / 0.15) * 0.2 : 1; // quick pop-in, then fade
+      g.globalAlpha = Math.min(1, (BANNER_LIFE - age) / 0.4);
+      g.fillStyle = "#ffe2a0";
+      g.font = `700 ${Math.round(34 * pop)}px ${SERIF}`;
+      g.textAlign = "center";
+      g.fillText(banner.text, W / 2, H * 0.3);
+      g.globalAlpha = 1;
+    }
+  }
 }
 
 function drawHud(t) {
