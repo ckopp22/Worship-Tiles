@@ -404,3 +404,14 @@ button.song-row { width: 100%; text-align: left; align-items: flex-start; flex-d
 .scrolls > * { flex-shrink: 0 } /* scrolling screens keep each control's full size instead of squeezing it */
 .slider { min-height: max(44px, 2.75em); }
 .cal-result[hidden] { display: none; }
+
+/* ---------- PWA: update banner, version label ---------- */
+.update-banner {
+  position: absolute; z-index: 60; left: 50%; transform: translateX(-50%);
+  top: calc(env(safe-area-inset-top, 0px) + .5em); width: calc(100% - 2.5em);
+  min-height: max(44px, 2.75em); padding: .5em 1em; border-radius: 1em; border: 1px solid #fff0c2;
+  background: linear-gradient(180deg, #ffe2a0, var(--gold-deep)); color: #2a1c05; font-weight: 700; cursor: pointer;
+  box-shadow: 0 .4em 1.2em rgba(0, 0, 0, .4);
+}
+.update-banner[hidden] { display: none; }
+.version { margin: .5em 0 0; text-align: center; font-size: .8em; opacity: .7; }

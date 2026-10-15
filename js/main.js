@@ -10,6 +10,7 @@ import * as settings from "./screens/settings.js";
 import * as results from "./screens/results.js";
 import * as calibrate from "./screens/calibrate.js";
 import * as game from "./game/game.js";
+import { initUpdates, screenChanged } from "./update.js";
 
 const MUSIC_SCREENS = new Set(["menu", "howto", "library", "store", "settings"]); // menu music plays here
 const stage = document.getElementById("stage");
@@ -27,6 +28,7 @@ export function go(name, data) {
   screens[name].el.classList.add("is-active");
   if (MUSIC_SCREENS.has(name)) startMenuMusic(); else stopMenuMusic();
   screens[name].mod?.enter?.(data);
+  screenChanged();
 }
 
 const app = { go };
@@ -61,3 +63,5 @@ installUnlockOnFirstTap();
 navigator.storage?.persist?.().catch(() => {}); // ask the browser not to evict saved data
 
 go(state.profile.hasSeenTutorial ? "menu" : "howto");
+
+initUpdates(() => current === "gameplay");

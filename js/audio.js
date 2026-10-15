@@ -6,7 +6,6 @@
 import { state, subscribe } from "./state.js";
 
 const SFX_BASE = 0.6;
-const MENU_MUSIC_URL = "songs/audio/menu.mp3";
 
 let ctx = null;
 let master = null, musicGain = null, sfxGain = null;
@@ -60,12 +59,19 @@ export const getMusicGain = () => musicGain;
 
 subscribe(applyGains);
 
-// ---- Menu music: plays songs/audio/menu.mp3 in a loop if that file exists; otherwise does nothing ----
+// ---- Menu music: loops the file named by "menuMusic" in songs/songs.json (e.g. "songs/audio/menu.mp3").
+// If that key is empty or missing, nothing is requested and nothing plays (no 404s in the console). ----
 let menuMusicWanted = false;
 let menuBuffer = null;     // decoded loop
 let menuMissing = false;   // file not found: never ask again
 let menuSource = null;
 let menuLoading = false;
+let menuUrlPromise = null;
+
+const getMenuUrl = () => (menuUrlPromise ??= fetch("songs/songs.json")
+  .then((res) => (res.ok ? res.json() : {}))
+  .then((json) => json.menuMusic || null)
+  .catch(() => null));
 
 export async function startMenuMusic() {
   menuMusicWanted = true;
@@ -73,7 +79,9 @@ export async function startMenuMusic() {
   try {
     if (!menuBuffer) {
       menuLoading = true;
-      const res = await fetch(MENU_MUSIC_URL);
+      const url = await getMenuUrl();
+      if (!url) { menuMissing = true; return; }
+      const res = await fetch(url);
       if (!res.ok) { menuMissing = true; return; }
       menuBuffer = await ctx.decodeAudioData(await res.arrayBuffer());
     }

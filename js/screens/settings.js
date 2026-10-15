@@ -32,6 +32,7 @@ export function init() {
     if (file) await importFile(file);
   });
   $("reset-progress").addEventListener("click", reset);
+  $("app-version").textContent = `Version ${globalThis.WT_VERSION ?? "dev"}`;
   subscribe(render);
   render();
 }

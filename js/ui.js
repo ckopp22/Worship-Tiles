@@ -31,9 +31,10 @@ export function confirmDialog({ title, message = "", confirmLabel = "Confirm", c
   });
 }
 
-// DEV ONLY: tap a Bank balance 5 times quickly for +1000 coins. Delete this function and its
-// two callers (screens/menu.js and screens/store.js) before sharing the game.
+// DEV ONLY: with ?dev=1 in the URL, tap a Bank balance 5 times quickly for +1000 coins.
+// Without ?dev=1 (the normal case) this does nothing.
 export function attachDevBankShortcut(el) {
+  if (!new URLSearchParams(location.search).has("dev")) return;
   let taps = 0, last = 0;
   el.addEventListener("click", () => {
     const now = performance.now();

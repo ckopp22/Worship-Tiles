@@ -7,6 +7,11 @@
   <meta name="theme-color" content="#0b1a3a">
   <meta name="description" content="A reverent rhythm-tap game built around classic hymns.">
 
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Worship Tiles">
+  <meta property="og:description" content="A reverent rhythm-tap game built around classic hymns.">
+
   <!-- Apple PWA -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
@@ -146,6 +151,7 @@
       <h3 class="settings-heading">Progress</h3>
       <button id="reset-progress" class="btn btn--danger" type="button">Reset Progress</button>
       <p id="settings-status" class="status" role="status"></p>
+      <p id="app-version" class="version"></p>
     </section>
 
     <!-- ===== Timing test (calibration) ===== -->
@@ -203,6 +209,9 @@
       <button class="btn" type="button" data-go="library">Back to Library</button>
     </section>
 
+    <!-- Shown when a new service worker is waiting (js/update.js) -->
+    <button id="update-banner" class="update-banner" type="button" hidden>New version ready. Tap to update</button>
+
     <!-- Confirm dialog (js/ui.js) -->
     <div id="dialog" class="overlay dialog" hidden role="alertdialog" aria-modal="true" aria-labelledby="dialog-title">
       <div class="dialog-panel">
@@ -220,6 +229,7 @@
     <p>Please rotate your phone to portrait</p>
   </div>
 
+  <script src="js/version.js"></script>
   <script type="module" src="js/main.js"></script>
 </body>
 </html>

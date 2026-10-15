@@ -5,6 +5,7 @@
 // PLACEHOLDERS: entries with "builtin": "test-melody" reuse the synthesized test track and its charts.
 // To add a real hymn, give its entry "audio" and a "charts" object (easy / normal / hard file paths)
 // instead of "builtin". Remove "placeholder": true from entries you replace.
+// Set "hidePlaceholders": true at the top of songs.json to hide every placeholder entry (for shipping).
 
 import { state } from "./state.js";
 import { getContext } from "./audio.js";
@@ -17,7 +18,7 @@ const audioCache = new Map(); // audio key -> { buffer, charts? }
 export function getCatalog() {
   catalogPromise ??= fetch("songs/songs.json")
     .then((res) => (res.ok ? res.json() : { songs: [] }))
-    .then((json) => json.songs ?? [])
+    .then((json) => (json.songs ?? []).filter((s) => !(json.hidePlaceholders && s.placeholder)))
     .catch(() => { catalogPromise = null; return []; });
   return catalogPromise;
 }
