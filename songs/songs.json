@@ -1,1 +1,64 @@
-{ "songs": [] }
+{
+  "songs": [
+    {
+      "id": "placeholder-hymn-1",
+      "title": "Placeholder Hymn 1",
+      "credit": "PLACEHOLDER: reuses the built-in test track",
+      "bpm": 72,
+      "price": 0,
+      "builtin": "test-melody",
+      "placeholder": true,
+      "previewStart": 0
+    },
+    {
+      "id": "placeholder-hymn-2",
+      "title": "Placeholder Hymn 2",
+      "credit": "PLACEHOLDER: reuses the built-in test track",
+      "bpm": 72,
+      "price": 0,
+      "builtin": "test-melody",
+      "placeholder": true,
+      "previewStart": 0
+    },
+    {
+      "id": "placeholder-hymn-3",
+      "title": "Placeholder Hymn 3",
+      "credit": "PLACEHOLDER: reuses the built-in test track",
+      "bpm": 72,
+      "price": 300,
+      "builtin": "test-melody",
+      "placeholder": true,
+      "previewStart": 0
+    },
+    {
+      "id": "placeholder-hymn-4",
+      "title": "Placeholder Hymn 4",
+      "credit": "PLACEHOLDER: reuses the built-in test track",
+      "bpm": 72,
+      "price": 600,
+      "builtin": "test-melody",
+      "placeholder": true,
+      "previewStart": 0
+    },
+    {
+      "id": "placeholder-hymn-5",
+      "title": "Placeholder Hymn 5",
+      "credit": "PLACEHOLDER: reuses the built-in test track",
+      "bpm": 72,
+      "price": 900,
+      "builtin": "test-melody",
+      "placeholder": true,
+      "previewStart": 0
+    },
+    {
+      "id": "placeholder-hymn-6",
+      "title": "Placeholder Hymn 6",
+      "credit": "PLACEHOLDER: reuses the built-in test track",
+      "bpm": 72,
+      "price": 1200,
+      "builtin": "test-melody",
+      "placeholder": true,
+      "previewStart": 0
+    }
+  ]
+}

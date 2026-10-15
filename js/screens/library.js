@@ -1,8 +1,8 @@
-// Song Library: list of songs; tapping one opens a bottom sheet with the difficulty selector,
-// best score / stars / accuracy for that difficulty, and Play.
+// Song Library: owned songs (tap for the difficulty sheet), then locked songs dimmed with a price and a
+// "Get in Store" shortcut (MDD 4.4).
 
 import { state, setLastDifficulty } from "../state.js";
-import { listSongs } from "../songs.js";
+import { listSongs, isOwned } from "../songs.js";
 import { DIFFICULTY_ORDER, DifficultyConfig } from "../game/difficulty.js";
 
 let app, listEl, sheet, songs = [], current = null, selected = "easy";
@@ -31,23 +31,43 @@ export function init(appRef) {
   });
 }
 
+const el = (tag, className, text) => {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
+};
+
 export async function enter() {
   closeSheet();
   songs = await listSongs();
-  listEl.replaceChildren(...songs.map((s) => {
-    const li = document.createElement("li");
-    const row = document.createElement("button");
-    row.className = "song-row";
+  const rows = [];
+
+  for (const s of songs.filter(isOwned)) {
+    const li = el("li");
+    const row = el("button", "song-row");
     row.type = "button";
     row.dataset.song = s.id;
-    const title = document.createElement("strong");
-    title.textContent = s.title;
-    const credit = document.createElement("span");
-    credit.textContent = s.credit;
-    row.append(title, credit);
+    row.append(el("strong", "", s.title), el("span", "", s.credit));
     li.append(row);
-    return li;
-  }));
+    rows.push(li);
+  }
+
+  const locked = songs.filter((s) => !isOwned(s));
+  if (locked.length) {
+    rows.push(el("li", "list-heading", "Locked"));
+    for (const s of locked) {
+      const li = el("li", "song-row locked");
+      const info = el("div");
+      info.append(el("strong", "", s.title), el("span", "", `${s.price.toLocaleString()} coins`));
+      const shop = el("button", "btn btn--small", "Get in Store");
+      shop.type = "button";
+      shop.dataset.go = "store";
+      li.append(info, shop);
+      rows.push(li);
+    }
+  }
+  listEl.replaceChildren(...rows);
 }
 
 function openSheet(id) {
@@ -75,14 +95,11 @@ function selectDifficulty(diff) {
   $("sheet-reward").textContent = `Coins ×${DifficultyConfig[diff].bankMultiplier.toFixed(1)}`;
 }
 
-// Build the Easy / Normal / Hard buttons once.
-export function buildDifficultyButtons() {
+function buildDifficultyButtons() {
   $("sheet-difficulty").replaceChildren(...DIFFICULTY_ORDER.map((d) => {
-    const b = document.createElement("button");
+    const b = el("button", "seg", DifficultyConfig[d].label);
     b.type = "button";
-    b.className = "seg";
     b.dataset.diff = d;
-    b.textContent = DifficultyConfig[d].label;
     return b;
   }));
 }

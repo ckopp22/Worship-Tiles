@@ -1,46 +1,53 @@
 // Song loader: the only place the game gets songs from.
-// loadSong(id, difficulty) resolves to { id, title, credit, bpm, buffer, chart }. Real mp3 + chart JSON
-// entries in songs/songs.json (MDD 6.3: one chart file per difficulty) load through the same function,
-// so game code never changes.
+// The catalog lives in songs/songs.json (MDD 6.3). loadSong(id, difficulty) resolves to
+// { id, title, credit, bpm, buffer, chart }, so game code never cares where a song came from.
+//
+// PLACEHOLDERS: entries with "builtin": "test-melody" reuse the synthesized test track and its charts.
+// To add a real hymn, give its entry "audio" and a "charts" object (easy / normal / hard file paths)
+// instead of "builtin". Remove "placeholder": true from entries you replace.
 
+import { state } from "./state.js";
 import { getContext } from "./audio.js";
-import { TEST_SONG_META, buildTestSong } from "./testsong.js";
+import { TEST_SONG_ID, buildTestSong } from "./testsong.js";
 
-const audioCache = new Map(); // id -> { meta, buffer, charts? }
+let catalogPromise = null;
+const audioCache = new Map(); // audio key -> { buffer, charts? }
 
-async function fetchCatalog() {
-  try {
-    const res = await fetch("songs/songs.json");
-    return res.ok ? (await res.json()).songs ?? [] : [];
-  } catch {
-    return [];
-  }
+/** All catalog entries (cached after the first successful fetch). */
+export function getCatalog() {
+  catalogPromise ??= fetch("songs/songs.json")
+    .then((res) => (res.ok ? res.json() : { songs: [] }))
+    .then((json) => json.songs ?? [])
+    .catch(() => { catalogPromise = null; return []; });
+  return catalogPromise;
 }
 
-/** Songs shown in the Library: the built-in test song plus anything in songs.json. */
-export async function listSongs() {
-  const catalog = await fetchCatalog();
-  return [TEST_SONG_META, ...catalog.map(({ id, title, credit, bpm }) => ({ id, title, credit, bpm }))];
-}
+export const listSongs = getCatalog;
 
-async function loadAudio(id) {
-  if (audioCache.has(id)) return audioCache.get(id);
-  let entry;
-  if (id === TEST_SONG_META.id) {
-    entry = { meta: TEST_SONG_META, ...(await buildTestSong()) }; // { buffer, charts }
+/** Free songs (price 0) are starters; everything else must be in ownedSongIds. */
+export const isOwned = (song) => song.price === 0 || state.profile.ownedSongIds.includes(song.id);
+
+async function loadAudio(entry) {
+  const key = entry.builtin ?? entry.id;
+  if (audioCache.has(key)) return audioCache.get(key);
+  let audio;
+  if (entry.builtin === TEST_SONG_ID) {
+    audio = await buildTestSong(); // { buffer, charts }
+  } else if (entry.builtin) {
+    throw new Error(`Unknown built-in track: ${entry.builtin}`);
   } else {
-    const song = (await fetchCatalog()).find((s) => s.id === id);
-    if (!song) throw new Error(`Unknown song: ${id}`);
-    const data = await fetch(song.audio).then((r) => r.arrayBuffer());
+    const data = await fetch(entry.audio).then((r) => r.arrayBuffer());
     const ctx = getContext() ?? new OfflineAudioContext(2, 1, 44100); // decode works on either
-    entry = { meta: song, buffer: await ctx.decodeAudioData(data), song };
+    audio = { buffer: await ctx.decodeAudioData(data) };
   }
-  audioCache.set(id, entry);
-  return entry;
+  audioCache.set(key, audio);
+  return audio;
 }
 
 export async function loadSong(id, difficulty = "easy") {
-  const { meta, buffer, charts, song } = await loadAudio(id);
-  const chart = charts ? charts[difficulty] : await fetch(song.charts[difficulty]).then((r) => r.json());
-  return { id: meta.id, title: meta.title, credit: meta.credit, bpm: meta.bpm, buffer, chart };
+  const entry = (await getCatalog()).find((s) => s.id === id);
+  if (!entry) throw new Error(`Unknown song: ${id}`);
+  const { buffer, charts } = await loadAudio(entry);
+  const chart = charts ? charts[difficulty] : await fetch(entry.charts[difficulty]).then((r) => r.json());
+  return { id: entry.id, title: entry.title, credit: entry.credit, bpm: entry.bpm, buffer, chart };
 }

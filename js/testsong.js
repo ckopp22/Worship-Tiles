@@ -7,12 +7,7 @@ const SPB = 60 / BPM;      // seconds per beat
 const BEATS = 64;          // 16 bars of 4/4 (about 53 s)
 const TAIL = 3;            // seconds of ring-out after the last note
 
-export const TEST_SONG_META = {
-  id: "test-melody",
-  title: "Test Melody",
-  credit: "Built-in synthesized test track",
-  bpm: BPM,
-};
+export const TEST_SONG_ID = "test-melody";
 
 // [startBeat, durationBeats, midiNote]. Bar 1 is a pad-only intro.
 const MELODY = [
@@ -80,7 +75,7 @@ const CHART_ROWS = {
 /** Chart in the section 6.4 format, built from CHART_ROWS (beats converted to seconds). */
 function toChart(difficulty) {
   return {
-    songId: TEST_SONG_META.id,
+    songId: TEST_SONG_ID,
     difficulty,
     notes: CHART_ROWS[difficulty].map(([beat, lane, type, lengthBeats]) => {
       const note = { time: Math.round(beat * SPB * 1000) / 1000, type };

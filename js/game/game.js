@@ -2,7 +2,7 @@
 // finished), wires input to the judge, turns judge events into sound and visuals, and hands the run to Results.
 // Timing comes from conductor.js, hit decisions from judge.js, drawing from renderer.js.
 
-import { recordResult } from "../state.js";
+import { state, recordResult, addToBank } from "../state.js";
 import { playHit, playMiss } from "../audio.js";
 import { loadSong } from "../songs.js";
 import * as conductor from "./conductor.js";
@@ -109,7 +109,10 @@ function finish() {
   const best = maxScore(field);
   const stars = starsFor(judge.score, best, difficulty);
   const accuracy = judge.accuracy;
-  recordResult(song.id, difficulty, { score: judge.score, stars, accuracy });
+  const newHigh = recordResult(song.id, difficulty, { score: judge.score, stars, accuracy });
+  const reward = bankReward(judge.score, difficulty);
+  const bankBefore = state.profile.bank;
+  addToBank(reward); // finish() runs once per play, so the reward is added exactly once
   app.go("results", {
     songId: song.id,
     title: song.title,
@@ -122,7 +125,10 @@ function finish() {
     doubles: judge.doublesLanded,
     chords: judge.chordsHit,
     stars,
-    bankReward: bankReward(judge.score, difficulty), // shown only; the Bank is updated in a later phase
+    reward,
+    bankBefore,
+    bankAfter: state.profile.bank,
+    newHigh,
   });
 }
 

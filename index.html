@@ -102,17 +102,35 @@
       </div>
     </section>
 
+    <!-- ===== Song Store ===== -->
     <section class="screen screen--plain" data-screen="store" aria-label="Song Store">
-      <button class="btn btn--small" type="button" data-go="menu">‹ Back</button>
+      <div class="store-top">
+        <button class="btn btn--small" type="button" data-go="menu">‹ Back</button>
+        <div id="store-bank-pill" class="bank" aria-label="Bank balance">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="#f2c460" stroke="#a8761c" stroke-width="1.5"/><circle cx="12" cy="12" r="5.5" fill="none" stroke="#a8761c" stroke-width="1.2"/></svg>
+          <span id="store-bank">0</span>
+        </div>
+      </div>
       <h2 class="screen-title">Song Store</h2>
-      <p class="placeholder">Coming in Phase 5.</p>
+      <p id="store-status" class="status" role="status"></p>
+      <ul id="store-list" class="song-list"></ul>
     </section>
 
+
+    <!-- ===== Settings (backup only for now) ===== -->
     <section class="screen screen--plain" data-screen="settings" aria-label="Settings">
       <button class="btn btn--small" type="button" data-go="menu">‹ Back</button>
       <h2 class="screen-title">Settings</h2>
-      <p class="placeholder">Coming in Phase 6.</p>
+      <h3 class="settings-heading">Backup</h3>
+      <p class="settings-note">Saves live in this browser. Export a copy so you don't lose your Bank and songs if browser data is cleared.</p>
+      <button id="export-save" class="btn" type="button">Export Save</button>
+      <button id="import-save" class="btn" type="button">Import Save</button>
+      <input id="import-file" type="file" accept="application/json,.json" hidden>
+      <h3 class="settings-heading">Progress</h3>
+      <button id="reset-progress" class="btn btn--danger" type="button">Reset Progress</button>
+      <p id="settings-status" class="status" role="status"></p>
     </section>
+
 
     <!-- ===== Gameplay (canvas + DOM pause controls) ===== -->
     <section class="screen screen--game" data-screen="gameplay" aria-label="Gameplay">
@@ -129,13 +147,14 @@
       </div>
     </section>
 
-    <!-- ===== Results (basic; stars and Bank reward come in Phase 5) ===== -->
-    <section class="screen screen--plain" data-screen="results" aria-label="Results">
+    <!-- ===== Results ===== -->
+    <section class="screen screen--plain scrolls" data-screen="results" aria-label="Results">
       <h2 class="screen-title">Song Complete</h2>
       <p id="res-song" class="res-song"></p>
+      <p id="res-new-high" class="res-high" hidden>New High Score!</p>
       <p id="res-stars" class="res-stars" role="img"></p>
       <p class="res-score" id="res-score">0</p>
-      <p id="res-reward" class="res-reward"></p>
+      <p class="res-reward">+<strong id="res-earned">0</strong> coins · Bank <strong id="res-bank">0</strong></p>
       <dl class="res-stats">
         <div><dt>Accuracy</dt><dd id="res-accuracy">0%</dd></div>
         <div><dt>Max combo</dt><dd id="res-combo">0</dd></div>
@@ -150,6 +169,16 @@
       <button id="results-again" class="btn btn--primary" type="button">Play Again</button>
       <button class="btn" type="button" data-go="library">Back to Library</button>
     </section>
+
+    <!-- Confirm dialog (js/ui.js) -->
+    <div id="dialog" class="overlay dialog" hidden role="alertdialog" aria-modal="true" aria-labelledby="dialog-title">
+      <div class="dialog-panel">
+        <h3 id="dialog-title"></h3>
+        <p id="dialog-message"></p>
+        <button id="dialog-ok" class="btn btn--primary" type="button">Confirm</button>
+        <button id="dialog-cancel" class="btn" type="button">Cancel</button>
+      </div>
+    </div>
   </main>
 
   <!-- Shown on touch devices held in landscape (iOS ignores the manifest orientation lock) -->

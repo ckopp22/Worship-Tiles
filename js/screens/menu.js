@@ -2,6 +2,7 @@
 
 import { state, subscribe, setSetting } from "../state.js";
 import { unlock } from "../audio.js";
+import { attachDevBankShortcut } from "../ui.js";
 
 const bankEl = document.getElementById("bank-amount");
 const soundBtn = document.getElementById("sound-toggle");
@@ -18,6 +19,7 @@ export function init() {
     unlock();
     setSetting("soundEnabled", !state.settings.soundEnabled);
   });
+  attachDevBankShortcut(document.querySelector(".bank")); // DEV shortcut
   subscribe(render);
   render();
 }
