@@ -19,7 +19,7 @@ html, body {
   height: 100%;
   overflow: hidden;
   overscroll-behavior: none;           /* no pull-to-refresh / rubber-band */
-  background: var(--navy-900);
+  background: var(--navy-800);        /* matches the stage, so no dark strip can show at the edges */
 }
 
 body {
@@ -41,9 +41,8 @@ button { font: inherit; color: inherit; touch-action: manipulation; }
 /* ---------- Stage: fixed portrait ratio, scaled by JS via font-size ---------- */
 #stage {
   position: relative;
-  height: 100vh;
-  height: 100dvh;
-  width: min(100vw, calc(100dvh * 0.5625));  /* max 9:16, letterboxed beyond that */
+  height: 100%;                              /* fills the fixed body (full screen, incl. the home-indicator area) */
+  width: min(100vw, calc(100vh * 0.5625));  /* max 9:16, letterboxed beyond that */
   font-size: 16px;                           /* JS rescales this; all UI sizes use em */
   overflow: hidden;
   background: var(--navy-800);
