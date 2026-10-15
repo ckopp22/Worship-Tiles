@@ -1,6 +1,6 @@
 // Song Store: locked songs with prices. Buy -> confirm -> deduct from the Bank -> own the song (MDD 4.5).
 
-import { state, subscribe, purchaseSong } from "../state.js";
+import { state, subscribe, purchaseSong, purchaseExpert, isExpertUnlocked, EXPERT_COST } from "../state.js";
 import { listSongs, isOwned } from "../songs.js";
 import { confirmDialog, attachDevBankShortcut } from "../ui.js";
 
@@ -13,7 +13,7 @@ export function init() {
   attachDevBankShortcut(document.getElementById("store-bank-pill")); // DEV shortcut
   listEl.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-buy]");
-    if (btn && !btn.disabled) buy(btn.dataset.buy);
+    if (btn && !btn.disabled) (btn.dataset.buy === "expert" ? buyExpert() : buy(btn.dataset.buy));
   });
   subscribe(() => active && render());
 }
@@ -33,37 +33,50 @@ function render() {
   const bank = state.profile.bank;
   balanceEl.textContent = bank.toLocaleString();
   const locked = songs.filter((s) => !isOwned(s));
-  if (!locked.length) {
+  const expertRow = isExpertUnlocked() ? [] : [row("Expert Level", "Hardest difficulty, on every song", EXPERT_COST, "expert", bank)];
+  if (!locked.length && !expertRow.length) {
     const li = document.createElement("li");
     li.className = "empty";
     li.textContent = "You own every hymn. More are coming.";
     listEl.replaceChildren(li);
     return;
   }
-  listEl.replaceChildren(...locked.map((s) => {
-    const li = document.createElement("li");
-    li.className = "song-row";
-    const info = document.createElement("div");
-    const title = document.createElement("strong");
-    title.textContent = s.title;
-    const price = document.createElement("span");
-    price.textContent = `${s.price.toLocaleString()} coins`;
-    info.append(title, price);
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.dataset.buy = s.id;
-    const need = s.price - bank;
-    if (need > 0) {
-      btn.className = "btn btn--small";
-      btn.disabled = true;
-      btn.textContent = `Need ${need.toLocaleString()} more`;
-    } else {
-      btn.className = "btn btn--small btn--primary";
-      btn.textContent = "Buy";
-    }
-    li.append(info, btn);
-    return li;
-  }));
+  listEl.replaceChildren(...expertRow, ...locked.map((s) => row(s.title, `${s.price.toLocaleString()} coins`, s.price, s.id, bank)));
+}
+
+function row(name, detail, cost, buyId, bank) {
+  const li = document.createElement("li");
+  li.className = "song-row";
+  const info = document.createElement("div");
+  const title = document.createElement("strong");
+  title.textContent = name;
+  const price = document.createElement("span");
+  price.textContent = buyId === "expert" ? `${detail} · ${cost.toLocaleString()} coins` : detail;
+  info.append(title, price);
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.dataset.buy = buyId;
+  const need = cost - bank;
+  if (need > 0) {
+    btn.className = "btn btn--small";
+    btn.disabled = true;
+    btn.textContent = `Need ${need.toLocaleString()} more`;
+  } else {
+    btn.className = "btn btn--small btn--primary";
+    btn.textContent = "Buy";
+  }
+  li.append(info, btn);
+  return li;
+}
+
+async function buyExpert() {
+  const ok = await confirmDialog({
+    title: `Unlock Expert for ${EXPERT_COST.toLocaleString()}?`,
+    message: `Adds the Expert difficulty to every song. You have ${state.profile.bank.toLocaleString()} coins.`,
+    confirmLabel: "Unlock",
+  });
+  if (!ok) return;
+  statusEl.textContent = purchaseExpert() ? "Expert unlocked on every song!" : "Not enough coins.";
 }
 
 async function buy(id) {

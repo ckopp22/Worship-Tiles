@@ -342,9 +342,10 @@ button.song-row { width: 100%; text-align: left; align-items: flex-start; flex-d
 }
 .sheet-title { margin: 0; font-family: var(--font-serif); font-size: 1.6em; color: var(--gold); }
 .sheet-credit, .sheet-reward { margin: 0; font-size: .9em; opacity: .75; }
-.segmented { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5em; }
+.segmented { display: grid; grid-template-columns: repeat(2, 1fr); gap: .5em; }
 .seg { min-height: 2.75em; border-radius: .8em; border: 1px solid rgba(242, 196, 96, .5); background: rgba(5, 11, 31, .5); font-weight: 600; cursor: pointer; }
 .seg[aria-pressed="true"] { background: linear-gradient(180deg, #ffe2a0, var(--gold-deep)); color: #2a1c05; }
+.seg:disabled { opacity: .5; cursor: not-allowed; }
 .sheet-stats { margin: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: .5em; text-align: center; }
 .sheet-stats dt { font-size: .75em; opacity: .7; }
 .sheet-stats dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }

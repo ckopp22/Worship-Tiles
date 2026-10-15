@@ -19,6 +19,7 @@ export function init(appRef) {
 export function enter(run) {
   if (!run) return;
   last = run;
+  $("res-title").textContent = run.failed ? "Song Failed" : "Song Complete";
   $("res-song").textContent = `${run.title} · ${DifficultyConfig[run.difficulty].label}`;
   $("res-new-high").hidden = !run.newHigh;
   $("res-stars").setAttribute("aria-label", `${run.stars} of 3 stars`);
@@ -26,11 +27,10 @@ export function enter(run) {
   $("res-combo").textContent = run.maxCombo;
   for (const k of ["perfect", "great", "good", "miss"]) $(`res-${k}`).textContent = run.counts[k];
   $("res-holds").textContent = run.holds;
-  $("res-doubles").textContent = run.doubles;
   $("res-chords").textContent = run.chords;
   revealStars(run.stars);
   countUp(run);
-  playJingle();
+  if (!run.failed) playJingle();
 }
 
 export function leave() {

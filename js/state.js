@@ -2,6 +2,7 @@
 
 const STORAGE_KEY = "worshipTiles.save.v1";
 const VERSION = 1;
+export const EXPERT_COST = 5000;
 
 const DEFAULTS = {
   settings: { soundEnabled: true, hapticsEnabled: true, latencyOffsetMs: 0, musicVolume: 0.8, sfxVolume: 0.7 },
@@ -9,7 +10,8 @@ const DEFAULTS = {
     bank: 0,
     ownedSongIds: [], // starter songs are granted once the catalog exists (Phase 4)
     highScores: {},   // { songId: { easy: { score, stars, accuracy } } }
-    lastDifficulty: {}, // { songId: "easy" | "normal" | "hard" }
+    lastDifficulty: {}, // { songId: "easy" | "normal" | "hard" | "expert" }
+    expertUnlocked: false, // Expert difficulty on all songs, bought once in the Store
     hasSeenTutorial: false,
   },
 };
@@ -106,6 +108,18 @@ export function recordResult(songId, difficulty, { score, stars, accuracy }) {
 /** Add coins to the Bank. */
 export function addToBank(amount) {
   setProfile("bank", state.profile.bank + Math.max(0, Math.floor(amount)));
+}
+
+export const isExpertUnlocked = () => state.profile.expertUnlocked;
+
+/** One-time purchase: spend EXPERT_COST coins to unlock Expert on every song. */
+export function purchaseExpert() {
+  const p = state.profile;
+  if (p.expertUnlocked || p.bank < EXPERT_COST) return false;
+  p.bank -= EXPERT_COST;
+  p.expertUnlocked = true;
+  commit();
+  return true;
 }
 
 /** Spend `price` coins and own the song. Returns false if already owned or unaffordable. */

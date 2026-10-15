@@ -46,7 +46,7 @@ export function createField(chart) {
       notes.push(...group.tiles);
     } else if (raw.type === "tap" || raw.type === "doubleTap" || (raw.type === "hold" && hold)) {
       if (!isLane(raw.lane)) continue;
-      const kind = raw.type === "hold" ? Kind.HOLD : raw.type === "doubleTap" ? Kind.DOUBLE : Kind.TAP;
+      const kind = raw.type === "hold" ? Kind.HOLD : Kind.TAP; // charts may still say doubleTap: played as a plain tap
       notes.push(makeTile(raw, raw.lane, kind, null));
     }
   }

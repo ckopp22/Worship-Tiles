@@ -61,6 +61,9 @@ export class Judge {
     this.holdsCompleted = 0;
     this.doublesLanded = 0;
     this.chordsHit = 0;
+    this.penalty = DifficultyConfig[difficulty].penalty ?? null; // Hard / Expert only
+    this.health = 100;
+    this.failed = false;
   }
 
   get accuracy() {
@@ -70,11 +73,11 @@ export class Judge {
 
   // ---------- player actions ----------
 
-  /** A finger went down in `lane` at song time t. Taps far from any note are ignored (no penalty). */
+  /** A finger went down in `lane` at song time t. Taps far from any note are wrong taps (a penalty on Hard / Expert, otherwise ignored). */
   tap(lane, t) {
     this.update(t);
     const note = firstActive(this.field, lane);
-    if (!note) return;
+    if (!note) { this.hurt("wrong", { lane }); return; }
 
     if (note.state === NoteState.WAIT_SECOND) { // second tap of a double-tap
       if (t - note.firstT <= DOUBLE_WINDOW) this.finishDouble(note, true, t);
@@ -82,7 +85,7 @@ export class Judge {
     }
     if (note.state !== NoteState.PENDING) return; // lane is busy with a hold
     const dt = Math.abs(t - note.time);
-    if (dt > this.win.good) return;
+    if (dt > this.win.good) { this.hurt("wrong", { lane }); return; }
     const grade = dt <= this.win.perfect ? "perfect" : dt <= this.win.great ? "great" : "good";
 
     if (note.kind === Kind.DOUBLE) {
@@ -162,6 +165,8 @@ export class Judge {
       note.state = note.kind === Kind.HOLD ? NoteState.HELD : NoteState.HIT;
       if (!group) { if (breakCombo) this.combo = 0; else this.bumpCombo(); }
     }
+    if (grade === "miss") this.hurt("miss", note);
+    else if (this.penalty) this.health = Math.min(100, this.health + this.penalty.heal);
     this.onEvent("grade", note, grade, base);
 
     if (group) {
@@ -169,6 +174,16 @@ export class Judge {
       if (grade === "miss") group.anyMiss = true;
       if (group.heads === 2) this.finishChordHeads(group);
     }
+  }
+
+  /** Hard / Expert: a miss or wrong tap costs score and health; at 0 health the song is failed. */
+  hurt(kind, note) {
+    const p = this.penalty;
+    if (!p || this.failed) return;
+    this.score = Math.max(0, this.score - (kind === "miss" ? p.scoreMiss : p.scoreWrong));
+    this.health = Math.max(0, this.health - (kind === "miss" ? p.miss : p.wrong));
+    if (this.health === 0) this.failed = true;
+    this.onEvent("hurt", note, kind, 0);
   }
 
   finishChordHeads(group) {

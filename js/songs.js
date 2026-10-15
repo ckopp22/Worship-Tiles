@@ -53,7 +53,8 @@ async function loadAudio(entry) {
 
 async function loadReal(entry, difficulty) {
   const { buffer, charts } = await loadAudio(entry);
-  const chart = charts ? charts[difficulty] : await (await fetchOk(entry.charts[difficulty])).json();
+  const pick = (c) => c[difficulty] ?? (difficulty === "expert" ? c.hard : undefined); // Expert reuses the Hard chart
+  const chart = charts ? pick(charts) : await (await fetchOk(pick(entry.charts))).json();
   if (!chart?.notes) throw new Error(`Bad chart for ${entry.id} (${difficulty})`);
   return { id: entry.id, title: entry.title, credit: entry.credit, bpm: entry.bpm, buffer, chart };
 }

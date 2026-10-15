@@ -1,7 +1,7 @@
 // Song Library: owned songs (tap for the difficulty sheet), then locked songs dimmed with a price and a
 // "Get in Store" shortcut (MDD 4.4).
 
-import { state, setLastDifficulty } from "../state.js";
+import { state, setLastDifficulty, isExpertUnlocked } from "../state.js";
 import { listSongs, isOwned } from "../songs.js";
 import { DIFFICULTY_ORDER, DifficultyConfig } from "../game/difficulty.js";
 
@@ -22,7 +22,7 @@ export function init(appRef) {
   $("sheet-backdrop").addEventListener("click", closeSheet);
   $("sheet-difficulty").addEventListener("click", (e) => {
     const btn = e.target.closest("[data-diff]");
-    if (btn) selectDifficulty(btn.dataset.diff);
+    if (btn && !btn.disabled) selectDifficulty(btn.dataset.diff);
   });
   $("sheet-play").addEventListener("click", () => {
     setLastDifficulty(current.id, selected);
@@ -75,7 +75,14 @@ function openSheet(id) {
   if (!current) return;
   $("sheet-title").textContent = current.title;
   $("sheet-credit").textContent = current.credit;
-  selectDifficulty(state.profile.lastDifficulty[id] in DifficultyConfig ? state.profile.lastDifficulty[id] : "easy");
+  const unlocked = isExpertUnlocked();
+  for (const btn of $("sheet-difficulty").children) {
+    if (btn.dataset.diff !== "expert") continue;
+    btn.disabled = !unlocked;
+    btn.textContent = unlocked ? DifficultyConfig.expert.label : "Expert 🔒 (Store)";
+  }
+  const last = state.profile.lastDifficulty[id];
+  selectDifficulty(last in DifficultyConfig && (last !== "expert" || unlocked) ? last : "easy");
   sheet.hidden = false;
 }
 

@@ -112,6 +112,29 @@ async function restart() {
   await startRun(token);
 }
 
+/** Hard / Expert: health ran out. No coins and no saved score. */
+function fail() {
+  runState = "finished";
+  app.go("results", {
+    failed: true,
+    songId: song.id,
+    title: song.title,
+    difficulty,
+    score: judge.score,
+    accuracy: judge.accuracy,
+    maxCombo: judge.maxCombo,
+    counts: { ...judge.counts },
+    holds: judge.holdsCompleted,
+    doubles: 0,
+    chords: judge.chordsHit,
+    stars: 0,
+    reward: 0,
+    bankBefore: state.profile.bank,
+    bankAfter: state.profile.bank,
+    newHigh: false,
+  });
+}
+
 function finish() {
   runState = "finished";
   judge.update(conductor.songTime() + 5); // flush anything still unresolved
@@ -211,6 +234,10 @@ function onEvent(type, note, key) {
     case "break":
       playMiss();
       break;
+    case "hurt":
+      view.flashRed(t);
+      if (key === "wrong") playMiss();
+      break;
   }
 }
 
@@ -226,6 +253,7 @@ function frame() {
       if (judge.combo > prevCombo && COMBO_MILESTONES.has(judge.combo)) view.showBanner(`${judge.combo} combo!`, t);
       prevCombo = judge.combo;
     }
+    if (judge.failed) { fail(); return; }
     if (t >= conductor.duration()) { finish(); return; }
   }
   let n = 0, frac = 0;

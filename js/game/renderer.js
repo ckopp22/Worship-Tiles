@@ -106,6 +106,7 @@ export function bindRun(fieldRef, judgeRef) {
   particles.forEach((p) => (p.on = false));
   glows.forEach((x) => (x.on = false));
   banner.on = false;
+  redFlashT = -10;
 }
 
 function makeLayer(w, h) {
@@ -220,6 +221,18 @@ function buildSprites() {
 
 export function flashLane(lane, t) { laneFlash[lane] = t; }
 
+let redFlashT = -10;
+/** A miss or wrong tap on Hard / Expert: the whole screen flashes red. */
+export function flashRed(t) { redFlashT = t; }
+
+function drawDanger(t) {
+  if (!judge.penalty) return;
+  const flash = 1 - (t - redFlashT) / 0.4;
+  const low = judge.health < 35 ? (1 - judge.health / 35) * (0.12 + 0.08 * Math.sin(t * 6)) : 0; // steady red glow when nearly failing
+  const a = Math.max(flash > 0 && flash <= 1 ? flash * 0.4 : 0, low);
+  if (a > 0) { g.globalAlpha = a; g.fillStyle = "#e03030"; g.fillRect(0, 0, W, H); g.globalAlpha = 1; }
+}
+
 /** Floating label centered on `x` (px). level 1 floats above level 0 so bonuses don't overlap grades. */
 export function spawnLabel(key, x, t, level) {
   const slot = texts[textNext++ % MAX_TEXTS];
@@ -260,6 +273,7 @@ export function draw(t, bigNumber, bigFrac) {
   drawFlashes(t);
   drawNotes(t);
   drawEffects(t);
+  drawDanger(t);
   drawHud(t);
   if (bigNumber) drawBigNumber(bigNumber, bigFrac);
 }
@@ -429,6 +443,12 @@ function drawHud(t) {
   g.fillStyle = "rgba(251,243,220,.2)";
   roundRect(g, barX, barY, barW, 4, 2); g.fill();
   if (frac > 0) { g.fillStyle = "#f2c460"; roundRect(g, barX, barY, Math.max(4, barW * frac), 4, 2); g.fill(); }
+  if (judge.penalty) { // health bar under the song progress bar
+    const hf = judge.health / 100;
+    g.fillStyle = "rgba(251,243,220,.2)";
+    roundRect(g, barX, barY + 10, barW, 6, 3); g.fill();
+    if (hf > 0) { g.fillStyle = hf < 0.35 ? "#e03030" : "#7fcf8a"; roundRect(g, barX, barY + 10, Math.max(6, barW * hf), 6, 3); g.fill(); }
+  }
   if (!state.settings.soundEnabled) {
     g.textAlign = "right";
     g.fillStyle = "rgba(251,243,220,.7)";
