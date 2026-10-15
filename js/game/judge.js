@@ -61,7 +61,7 @@ export class Judge {
     this.holdsCompleted = 0;
     this.doublesLanded = 0;
     this.chordsHit = 0;
-    this.penalty = DifficultyConfig[difficulty].penalty ?? null; // Hard / Expert only
+    this.penalty = DifficultyConfig[difficulty].penalty ?? null; // Hard only
     this.health = 100;
     this.failed = false;
   }
@@ -73,7 +73,7 @@ export class Judge {
 
   // ---------- player actions ----------
 
-  /** A finger went down in `lane` at song time t. Taps far from any note are wrong taps (a penalty on Hard / Expert, otherwise ignored). */
+  /** A finger went down in `lane` at song time t. Taps far from any note are wrong taps (a penalty on Hard, otherwise ignored). */
   tap(lane, t) {
     this.update(t);
     const note = firstActive(this.field, lane);
@@ -176,7 +176,7 @@ export class Judge {
     }
   }
 
-  /** Hard / Expert: a miss or wrong tap costs score and health; at 0 health the song is failed. */
+  /** Hard: a miss or wrong tap costs score and health; at 0 health the song is failed. */
   hurt(kind, note) {
     const p = this.penalty;
     if (!p || this.failed) return;

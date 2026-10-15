@@ -113,7 +113,7 @@ async function restart() {
   await startRun(token);
 }
 
-/** Hard / Expert: health ran out. No coins and no saved score. */
+/** Hard: health ran out. No coins and no saved score. */
 function fail() {
   runState = "finished";
   app.go("results", {

@@ -1,7 +1,7 @@
 // Song Library: owned songs (tap for the difficulty sheet), then locked songs dimmed with a price and a
 // "Get in Store" shortcut (MDD 4.4).
 
-import { state, setLastDifficulty, isExpertUnlocked } from "../state.js";
+import { state, setLastDifficulty } from "../state.js";
 import { listSongs, isOwned } from "../songs.js";
 import { DIFFICULTY_ORDER, DifficultyConfig } from "../game/difficulty.js";
 
@@ -75,14 +75,8 @@ function openSheet(id) {
   if (!current) return;
   $("sheet-title").textContent = current.title;
   $("sheet-credit").textContent = current.credit;
-  const unlocked = isExpertUnlocked();
-  for (const btn of $("sheet-difficulty").children) {
-    if (btn.dataset.diff !== "expert") continue;
-    btn.disabled = !unlocked;
-    btn.textContent = unlocked ? DifficultyConfig.expert.label : "Expert 🔒 (Store)";
-  }
   const last = state.profile.lastDifficulty[id];
-  selectDifficulty(last in DifficultyConfig && (last !== "expert" || unlocked) ? last : "easy");
+  selectDifficulty(last in DifficultyConfig ? last : "easy");
   sheet.hidden = false;
 }
 

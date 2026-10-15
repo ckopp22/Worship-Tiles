@@ -1,7 +1,7 @@
-// Generates the Easy / Normal / Hard / Expert charts for a song from its note timings.
+// Generates the Easy / Normal / Hard charts for a song from its note timings.
 //   node tools/make_charts.mjs [song-id]        (default: amazing-grace)
 // Reads  tools/data/<id>.notes.json   (MIDI-derived, or estimated from audio by tools/analyze_song.mjs)
-// Writes songs/charts/<id>-{easy,normal,hard,expert}.json (MDD 6.4 format, times in seconds of the shipped audio).
+// Writes songs/charts/<id>-{easy,normal,hard}.json (MDD 6.4 format, times in seconds of the shipped audio).
 // Deterministic: the same input always gives the same charts.
 
 import fs from "node:fs";
@@ -137,21 +137,8 @@ const isEighthPair = (n, next) =>
   next && !isLong(n) && next.time - n.time < DOUBLE_GAP && (next.pitch === n.pitch || next.lane === n.lane);
 
 // ---- difficulties ----
+/** Hard (the old Expert chart, all taps): every melody note on its own (no merged pairs), more chords, and the harmony voices as extra taps. */
 function buildHard() {
-  const out = [];
-  let lastDouble = -Infinity;
-  for (let i = 0; i < melody.length; i++) {
-    const n = melody[i];
-    if (isEighthPair(n, melody[i + 1]) && out.length - lastDouble >= DOUBLE_SPACING) { lastDouble = out.length; out.push(double(n)); i++; continue; }
-    if (isPhraseEnd(n)) out.push(chord(n, harmonyLane(n), true));
-    else if (isLong(n)) out.push(hold(n));
-    else out.push(tap(n));
-  }
-  return out;
-}
-
-/** Expert: every melody note on its own (no merged pairs), more chords, and the harmony voices as extra taps. */
-function buildExpert() {
   const out = melody.map((n, k) => {
     if (isPhraseEnd(n)) return chord(n, harmonyLane(n), true);
     if (isLong(n)) return hold(n);
@@ -263,6 +250,9 @@ function buildEasy() {
   return out;
 }
 
+/** Hard is taps only: holds become taps, chords become one tap per lane, doubleTaps become taps. */
+const tapify = (notes) => notes.flatMap((n) => (n.lanes ? n.lanes.map((lane) => ({ time: n.time, lane, type: "tap" })) : [{ time: n.time, lane: n.lane, type: "tap" }]));
+
 /** Keep the snapped chart playable: holds release before the next note in their lanes; same-lane collisions are dropped. */
 function finalize(notes) {
   if (!MIDI_GRID) return notes;
@@ -296,13 +286,13 @@ function finalize(notes) {
 }
 
 // ---- write ----
-const SUBDIVISIONS = { easy: 2, normal: 2, hard: 4, expert: 4 };
-const builders = { easy: buildEasy, normal: buildNormal, hard: buildHard, expert: buildExpert };
+const SUBDIVISIONS = { easy: 2, normal: 2, hard: 4 };
+const builders = { easy: buildEasy, normal: buildNormal, hard: buildHard };
 fs.mkdirSync(path.join(ROOT, "songs/charts"), { recursive: true });
 console.log(`${SONG_ID}: ${melody.length} source notes, pitch range ${melodyRange.lo}-${melodyRange.hi}, ${BPM} bpm, ${BEATS_PER_BAR}/4`);
 for (const [difficulty, build] of Object.entries(builders)) {
   SUB = SUBDIVISIONS[difficulty];
-  const notes = finalize(build()).sort((a, b) => a.time - b.time);
+  const notes = finalize(difficulty === "hard" ? tapify(build()) : build()).sort((a, b) => a.time - b.time);
   const body = notes.map((n) => "    " + JSON.stringify(n)).join(",\n"); // one note per line
   const text = `{\n  "songId": "${SONG_ID}",\n  "difficulty": "${difficulty}",\n  "notes": [\n${body}\n  ]\n}\n`;
   fs.writeFileSync(path.join(ROOT, `songs/charts/${SONG_ID}-${difficulty}.json`), text);

@@ -31,9 +31,9 @@ const median = (a) => { const s = [...a].sort((x, y) => x - y); return s.length 
 const ms = (x) => (x * 1000).toFixed(1);
 
 // ---- 1. grid check ----
-const SUB = { easy: 2, normal: 2, hard: 4, expert: 4 };
+const SUB = { easy: 2, normal: 2, hard: 4 };
 const charts = {};
-for (const d of ["easy", "normal", "hard", "expert"]) {
+for (const d of ["easy", "normal", "hard"]) {
   if (!song.charts[d]) continue;
   charts[d] = JSON.parse(fs.readFileSync(path.join(ROOT, song.charts[d]), "utf8")).notes;
 }

@@ -13,8 +13,7 @@
       "charts": {
         "easy": "songs/charts/amazing-grace-easy.json",
         "normal": "songs/charts/amazing-grace-normal.json",
-        "hard": "songs/charts/amazing-grace-hard.json",
-        "expert": "songs/charts/amazing-grace-expert.json"
+        "hard": "songs/charts/amazing-grace-hard.json"
       },
       "previewStart": 0
     },
@@ -28,8 +27,7 @@
       "charts": {
         "easy": "songs/charts/rock-of-ages-easy.json",
         "normal": "songs/charts/rock-of-ages-normal.json",
-        "hard": "songs/charts/rock-of-ages-hard.json",
-        "expert": "songs/charts/rock-of-ages-expert.json"
+        "hard": "songs/charts/rock-of-ages-hard.json"
       },
       "previewStart": 0
     },
@@ -43,8 +41,7 @@
       "charts": {
         "easy": "songs/charts/old-rugged-cross-easy.json",
         "normal": "songs/charts/old-rugged-cross-normal.json",
-        "hard": "songs/charts/old-rugged-cross-hard.json",
-        "expert": "songs/charts/old-rugged-cross-expert.json"
+        "hard": "songs/charts/old-rugged-cross-hard.json"
       },
       "previewStart": 0
     },
@@ -58,8 +55,7 @@
       "charts": {
         "easy": "songs/charts/how-great-thou-art-easy.json",
         "normal": "songs/charts/how-great-thou-art-normal.json",
-        "hard": "songs/charts/how-great-thou-art-hard.json",
-        "expert": "songs/charts/how-great-thou-art-expert.json"
+        "hard": "songs/charts/how-great-thou-art-hard.json"
       },
       "previewStart": 0
     },
@@ -73,8 +69,7 @@
       "charts": {
         "easy": "songs/charts/holy-holy-holy-easy.json",
         "normal": "songs/charts/holy-holy-holy-normal.json",
-        "hard": "songs/charts/holy-holy-holy-hard.json",
-        "expert": "songs/charts/holy-holy-holy-expert.json"
+        "hard": "songs/charts/holy-holy-holy-hard.json"
       },
       "previewStart": 0
     },
@@ -88,8 +83,7 @@
       "charts": {
         "easy": "songs/charts/blessed-assurance-easy.json",
         "normal": "songs/charts/blessed-assurance-normal.json",
-        "hard": "songs/charts/blessed-assurance-hard.json",
-        "expert": "songs/charts/blessed-assurance-expert.json"
+        "hard": "songs/charts/blessed-assurance-hard.json"
       },
       "previewStart": 0
     },
@@ -103,8 +97,7 @@
       "charts": {
         "easy": "songs/charts/what-a-friend-we-have-in-jesus-easy.json",
         "normal": "songs/charts/what-a-friend-we-have-in-jesus-normal.json",
-        "hard": "songs/charts/what-a-friend-we-have-in-jesus-hard.json",
-        "expert": "songs/charts/what-a-friend-we-have-in-jesus-expert.json"
+        "hard": "songs/charts/what-a-friend-we-have-in-jesus-hard.json"
       },
       "previewStart": 0
     },
@@ -118,8 +111,7 @@
       "charts": {
         "easy": "songs/charts/come-thou-fount-easy.json",
         "normal": "songs/charts/come-thou-fount-normal.json",
-        "hard": "songs/charts/come-thou-fount-hard.json",
-        "expert": "songs/charts/come-thou-fount-expert.json"
+        "hard": "songs/charts/come-thou-fount-hard.json"
       },
       "previewStart": 0
     },
@@ -133,8 +125,7 @@
       "charts": {
         "easy": "songs/charts/abide-with-me-easy.json",
         "normal": "songs/charts/abide-with-me-normal.json",
-        "hard": "songs/charts/abide-with-me-hard.json",
-        "expert": "songs/charts/abide-with-me-expert.json"
+        "hard": "songs/charts/abide-with-me-hard.json"
       },
       "previewStart": 0
     },
@@ -148,8 +139,7 @@
       "charts": {
         "easy": "songs/charts/be-thou-my-vision-easy.json",
         "normal": "songs/charts/be-thou-my-vision-normal.json",
-        "hard": "songs/charts/be-thou-my-vision-hard.json",
-        "expert": "songs/charts/be-thou-my-vision-expert.json"
+        "hard": "songs/charts/be-thou-my-vision-hard.json"
       },
       "previewStart": 0
     },
@@ -163,8 +153,7 @@
       "charts": {
         "easy": "songs/charts/i-need-thee-every-hour-easy.json",
         "normal": "songs/charts/i-need-thee-every-hour-normal.json",
-        "hard": "songs/charts/i-need-thee-every-hour-hard.json",
-        "expert": "songs/charts/i-need-thee-every-hour-expert.json"
+        "hard": "songs/charts/i-need-thee-every-hour-hard.json"
       },
       "previewStart": 0
     },
@@ -178,8 +167,7 @@
       "charts": {
         "easy": "songs/charts/crown-him-with-many-crowns-easy.json",
         "normal": "songs/charts/crown-him-with-many-crowns-normal.json",
-        "hard": "songs/charts/crown-him-with-many-crowns-hard.json",
-        "expert": "songs/charts/crown-him-with-many-crowns-expert.json"
+        "hard": "songs/charts/crown-him-with-many-crowns-hard.json"
       },
       "previewStart": 0
     }

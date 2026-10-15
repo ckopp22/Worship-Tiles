@@ -222,7 +222,7 @@ function buildSprites() {
 export function flashLane(lane, t) { laneFlash[lane] = t; }
 
 let redFlashT = -10;
-/** A miss or wrong tap on Hard / Expert: the whole screen flashes red. */
+/** A miss or wrong tap on Hard: the whole screen flashes red. */
 export function flashRed(t) { redFlashT = t; }
 
 function drawDanger(t) {

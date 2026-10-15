@@ -20,7 +20,7 @@ const CARDS = [
     art: svg(`${lanes}${hitLine}<path d="M${L[0]} 150H${L[2]}" stroke="#f2c460" stroke-width="6" stroke-linecap="round"/>${tile(L[0], 133)}${tile(L[2], 133)}<circle class="tap-ring" cx="${L[0]}" cy="190" r="26" fill="none" stroke="#fff6d8" stroke-width="3"/><circle class="tap-ring" cx="${L[2]}" cy="190" r="26" fill="none" stroke="#fff6d8" stroke-width="3"/>`) },
   { title: "Time it well", body: "Perfect, Great, Good, or Miss. Better timing means more points.",
     art: svg(`${text(128, 70, "Perfect", 30, "#ffe2a0")}${text(128, 115, "Great", 26)}${text(128, 155, "Good", 22, "rgba(251,243,220,.8)")}${text(128, 190, "Miss", 18, "rgba(251,243,220,.5)")}`) },
-  { title: "Pick your challenge", body: "Easy, Normal, or Hard for each song. Harder modes earn more coins. Buy Expert in the Store for 5,000 coins.",
+  { title: "Pick your challenge", body: "Easy, Normal, or Hard for each song. Harder modes earn more coins.",
     art: svg(["Easy", "Normal", "Hard"].map((d, i) => `<rect x="48" y="${50 + i * 56}" width="160" height="42" rx="21" fill="rgba(242,196,96,${0.25 + i * 0.25})" stroke="#f2c460" stroke-width="1.5"/>${text(128, 78 + i * 56, d, 20, i === 2 ? "#2a1c05" : "#fbf3dc")}`).join("")) },
   { title: "Earn and unlock", body: "Your score goes into your Bank. Spend it on more hymns.",
     art: svg(`<circle cx="128" cy="130" r="64" fill="#f2c460" stroke="#a8761c" stroke-width="5"/><circle cx="128" cy="130" r="44" fill="none" stroke="#a8761c" stroke-width="3"/><path d="M122 100h12v22h22v12h-22v22h-12v-22h-22v-12h22z" fill="#a8761c"/>`) },
