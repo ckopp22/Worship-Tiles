@@ -8,7 +8,7 @@
 
 import { state } from "./state.js";
 import { getContext } from "./audio.js";
-import { TEST_SONG_ID, buildTestSong } from "./testsong.js";
+import { TEST_SONG_ID, TEST_BPM, buildTestSong } from "./testsong.js";
 
 let catalogPromise = null;
 const audioCache = new Map(); // audio key -> { buffer, charts? }
@@ -27,6 +27,12 @@ export const listSongs = getCatalog;
 /** Free songs (price 0) are starters; everything else must be in ownedSongIds. */
 export const isOwned = (song) => song.price === 0 || state.profile.ownedSongIds.includes(song.id);
 
+async function fetchOk(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
+  return res;
+}
+
 async function loadAudio(entry) {
   const key = entry.builtin ?? entry.id;
   if (audioCache.has(key)) return audioCache.get(key);
@@ -36,7 +42,7 @@ async function loadAudio(entry) {
   } else if (entry.builtin) {
     throw new Error(`Unknown built-in track: ${entry.builtin}`);
   } else {
-    const data = await fetch(entry.audio).then((r) => r.arrayBuffer());
+    const data = await (await fetchOk(entry.audio)).arrayBuffer();
     const ctx = getContext() ?? new OfflineAudioContext(2, 1, 44100); // decode works on either
     audio = { buffer: await ctx.decodeAudioData(data) };
   }
@@ -44,10 +50,23 @@ async function loadAudio(entry) {
   return audio;
 }
 
+async function loadReal(entry, difficulty) {
+  const { buffer, charts } = await loadAudio(entry);
+  const chart = charts ? charts[difficulty] : await (await fetchOk(entry.charts[difficulty])).json();
+  if (!chart?.notes) throw new Error(`Bad chart for ${entry.id} (${difficulty})`);
+  return { id: entry.id, title: entry.title, credit: entry.credit, bpm: entry.bpm, buffer, chart };
+}
+
+/** Load a song for a difficulty. If its audio or chart can't be loaded, play the built-in test track instead. */
 export async function loadSong(id, difficulty = "easy") {
   const entry = (await getCatalog()).find((s) => s.id === id);
   if (!entry) throw new Error(`Unknown song: ${id}`);
-  const { buffer, charts } = await loadAudio(entry);
-  const chart = charts ? charts[difficulty] : await fetch(entry.charts[difficulty]).then((r) => r.json());
-  return { id: entry.id, title: entry.title, credit: entry.credit, bpm: entry.bpm, buffer, chart };
+  try {
+    return await loadReal(entry, difficulty);
+  } catch (err) {
+    if (entry.builtin) throw err;
+    console.warn(`Could not load "${id}" (${err.message}); using the built-in test track instead.`);
+    const fallback = { ...entry, builtin: TEST_SONG_ID, bpm: TEST_BPM };
+    return loadReal(fallback, difficulty);
+  }
 }

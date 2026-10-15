@@ -8,6 +8,7 @@ const BEATS = 64;          // 16 bars of 4/4 (about 53 s)
 const TAIL = 3;            // seconds of ring-out after the last note
 
 export const TEST_SONG_ID = "test-melody";
+export const TEST_BPM = BPM;
 
 // [startBeat, durationBeats, midiNote]. Bar 1 is a pad-only intro.
 const MELODY = [

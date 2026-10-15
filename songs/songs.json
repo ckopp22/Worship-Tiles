@@ -1,13 +1,17 @@
 {
   "songs": [
     {
-      "id": "placeholder-hymn-1",
-      "title": "Placeholder Hymn 1",
-      "credit": "PLACEHOLDER: reuses the built-in test track",
-      "bpm": 72,
+      "id": "amazing-grace",
+      "title": "Amazing Grace",
+      "credit": "Words: John Newton (1779)",
+      "bpm": 90,
       "price": 0,
-      "builtin": "test-melody",
-      "placeholder": true,
+      "audio": "songs/audio/amazing-grace.mp3",
+      "charts": {
+        "easy": "songs/charts/amazing-grace-easy.json",
+        "normal": "songs/charts/amazing-grace-normal.json",
+        "hard": "songs/charts/amazing-grace-hard.json"
+      },
       "previewStart": 0
     },
     {
