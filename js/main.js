@@ -8,24 +8,27 @@ import * as library from "./screens/library.js";
 import * as store from "./screens/store.js";
 import * as settings from "./screens/settings.js";
 import * as results from "./screens/results.js";
+import * as game from "./game/game.js";
 
 const stage = document.getElementById("stage");
 const screens = {};
 let current = null;
 
-/** Show one screen, hide the rest. Screen modules may export enter() to refresh on show. */
-export function go(name) {
+/** Show one screen, hide the rest. Screen modules may export enter(data) and leave(). */
+export function go(name, data) {
   if (!screens[name]) return;
-  if (current) screens[current].el.classList.remove("is-active");
+  if (current) {
+    screens[current].el.classList.remove("is-active");
+    screens[current].mod?.leave?.();
+  }
   current = name;
   screens[name].el.classList.add("is-active");
-  screens[name].mod?.enter?.();
+  screens[name].mod?.enter?.(data);
 }
 
 const app = { go };
 
-// Screens without a module (gameplay arrives in Phase 3) still get registered.
-const modules = { menu, howto, library, store, settings, results };
+const modules = { menu, howto, library, store, settings, results, gameplay: game };
 document.querySelectorAll("[data-screen]").forEach((el) => {
   const name = el.dataset.screen;
   screens[name] = { el, mod: modules[name] };

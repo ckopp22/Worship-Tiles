@@ -6,7 +6,7 @@ Keep token usage low. Be efficient in what you read, what you write, and what yo
 - **Name:** Worship Tiles
 - **Type:** Mobile web game (installable PWA, portrait)
 - **Stack:** Plain HTML, CSS, vanilla JS (ES modules), Canvas 2D, Web Audio, localStorage; GitHub Pages
-- **Design doc:** `docs/Worship-Tiles-Web-MDD.md` (build phases in section 10)
+- **Design doc:** `docs/Worship-Tiles-Web-MDD2.md` (current; build phases in section 10; MDD.md is the older v0.2)
 - **Key constraints:** no frameworks, no build step, no dependencies, relative paths only (GitHub Pages subpath), public-domain songs only
 
 ## Reading files

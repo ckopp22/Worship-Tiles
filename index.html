@@ -78,10 +78,11 @@
     </section>
 
     <!-- ===== Placeholder screens (later phases) ===== -->
+    <!-- ===== Song Library (rows only for now; bottom sheet + difficulty come in Phase 4) ===== -->
     <section class="screen screen--plain" data-screen="library" aria-label="Song Library">
       <button class="btn btn--small" type="button" data-go="menu">‹ Back</button>
       <h2 class="screen-title">Song Library</h2>
-      <p class="placeholder">Coming in Phase 4.</p>
+      <ul id="song-list" class="song-list"></ul>
     </section>
 
     <section class="screen screen--plain" data-screen="store" aria-label="Song Store">
@@ -96,16 +97,36 @@
       <p class="placeholder">Coming in Phase 6.</p>
     </section>
 
-    <section class="screen screen--plain" data-screen="gameplay" aria-label="Gameplay">
-      <button class="btn btn--small" type="button" data-go="library">‹ Back</button>
-      <h2 class="screen-title">Gameplay</h2>
-      <p class="placeholder">Coming in Phase 3.</p>
+    <!-- ===== Gameplay (canvas + DOM pause controls) ===== -->
+    <section class="screen screen--game" data-screen="gameplay" aria-label="Gameplay">
+      <canvas id="game-canvas"></canvas>
+      <button id="pause-btn" class="icon-btn pause-btn" type="button" aria-label="Pause">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="currentColor"/></svg>
+      </button>
+      <p id="game-loading" class="game-loading">Loading…</p>
+      <div id="pause-overlay" class="overlay" hidden>
+        <h2 class="screen-title">Paused</h2>
+        <button id="pause-resume" class="btn btn--primary" type="button">Resume</button>
+        <button id="pause-restart" class="btn" type="button">Restart</button>
+        <button id="pause-quit" class="btn" type="button">Quit</button>
+      </div>
     </section>
 
+    <!-- ===== Results (basic; stars and Bank reward come in Phase 5) ===== -->
     <section class="screen screen--plain" data-screen="results" aria-label="Results">
-      <button class="btn btn--small" type="button" data-go="menu">‹ Back</button>
-      <h2 class="screen-title">Results</h2>
-      <p class="placeholder">Coming in Phase 5.</p>
+      <h2 class="screen-title">Song Complete</h2>
+      <p id="res-song" class="res-song"></p>
+      <p class="res-score" id="res-score">0</p>
+      <dl class="res-stats">
+        <div><dt>Accuracy</dt><dd id="res-accuracy">0%</dd></div>
+        <div><dt>Max combo</dt><dd id="res-combo">0</dd></div>
+        <div><dt>Perfect</dt><dd id="res-perfect">0</dd></div>
+        <div><dt>Great</dt><dd id="res-great">0</dd></div>
+        <div><dt>Good</dt><dd id="res-good">0</dd></div>
+        <div><dt>Miss</dt><dd id="res-miss">0</dd></div>
+      </dl>
+      <button id="results-again" class="btn btn--primary" type="button">Play Again</button>
+      <button class="btn" type="button" data-go="library">Back to Library</button>
     </section>
   </main>
 
