@@ -253,6 +253,33 @@ function buildEasy() {
 /** Hard is taps only: holds become taps, chords become one tap per lane, doubleTaps become taps. */
 const tapify = (notes) => notes.flatMap((n) => (n.lanes ? n.lanes.map((lane) => ({ time: n.time, lane, type: "tap" })) : [{ time: n.time, lane: n.lane, type: "tap" }]));
 
+/** Hard: fill silent-for-the-player stretches (sustained notes, long gaps) with taps while the music is still sounding. */
+const FILL_GAP = 0.8;     // gaps between taps longer than this get filler taps
+const FILL_SPACING = 0.5; // aim for about one filler tap per this many seconds
+const sounding = (t) => tracks.some((tr) => tr.notes.some((x) => x.start <= t - lead + 0.02 && x.end > t - lead));
+function fillGaps(notes) {
+  notes.sort((x, y) => x.time - y.time);
+  const times = [...new Set(notes.map((x) => x.time))];
+  const laneAt = new Map(notes.map((x) => [x.time, x.lane]));
+  const extra = [];
+  let flip = 0;
+  for (let i = 0; i + 1 < times.length; i++) {
+    const a = times[i], z = times[i + 1], gap = z - a;
+    if (gap <= FILL_GAP) continue;
+    const slots = Math.round(gap / FILL_SPACING);
+    let prev = laneAt.get(a);
+    for (let k = 1; k < slots; k++) {
+      const time = snap(round3(a + (gap * k) / slots));
+      if (time - a < 0.2 || z - time < 0.2 || !sounding(time)) continue;
+      const choices = [0, 1, 2, 3].filter((l) => l !== prev && l !== laneAt.get(z));
+      const lane = choices[(flip++ + k) % choices.length];
+      extra.push({ time, lane, type: "tap" });
+      prev = lane;
+    }
+  }
+  return notes.concat(extra);
+}
+
 /** Keep the snapped chart playable: holds release before the next note in their lanes; same-lane collisions are dropped. */
 function finalize(notes) {
   if (!MIDI_GRID) return notes;
@@ -292,7 +319,7 @@ fs.mkdirSync(path.join(ROOT, "songs/charts"), { recursive: true });
 console.log(`${SONG_ID}: ${melody.length} source notes, pitch range ${melodyRange.lo}-${melodyRange.hi}, ${BPM} bpm, ${BEATS_PER_BAR}/4`);
 for (const [difficulty, build] of Object.entries(builders)) {
   SUB = SUBDIVISIONS[difficulty];
-  const notes = finalize(difficulty === "hard" ? tapify(build()) : build()).sort((a, b) => a.time - b.time);
+  const notes = finalize(difficulty === "hard" ? fillGaps(tapify(build())) : build()).sort((a, b) => a.time - b.time);
   const body = notes.map((n) => "    " + JSON.stringify(n)).join(",\n"); // one note per line
   const text = `{\n  "songId": "${SONG_ID}",\n  "difficulty": "${difficulty}",\n  "notes": [\n${body}\n  ]\n}\n`;
   fs.writeFileSync(path.join(ROOT, `songs/charts/${SONG_ID}-${difficulty}.json`), text);
