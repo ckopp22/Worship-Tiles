@@ -10,8 +10,8 @@ export const DifficultyConfig = {
   normal: { label: "Normal", scrollSpeed: 0.55, tileScale: 1.3, windowScale: 1.0,  bankMultiplier: 1.5, stars: { two: 0.55, three: 0.8 } },
   hard:   { label: "Hard",   scrollSpeed: 0.70, tileScale: 1, windowScale: 0.85, bankMultiplier: 2.0, stars: { two: 0.6, three: 0.85 },
           penalty: { miss: 10, wrong: 5, heal: 2, scoreMiss: 50, scoreWrong: 25 } },
-  expert: { label: "Expert", scrollSpeed: 0.85, tileScale: 0.9, windowScale: 0.75, bankMultiplier: 3.0, stars: { two: 0.65, three: 0.9 },
-          penalty: { miss: 14, wrong: 8, heal: 2, scoreMiss: 75, scoreWrong: 40 } },
+  expert: { label: "Expert", scrollSpeed: 1.0, tileScale: 0.85, windowScale: 0.6, bankMultiplier: 3.0, stars: { two: 0.7, three: 0.92 },
+          penalty: { miss: 20, wrong: 12, heal: 1, scoreMiss: 100, scoreWrong: 60 } },
 };
 
 /** 1 to 3 stars for a finished run. */

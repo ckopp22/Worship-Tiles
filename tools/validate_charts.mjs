@@ -42,7 +42,7 @@ for (const song of songs) {
   const SONG_ID = song.id;
   const total = audioDuration(path.join(ROOT, song.audio));
   console.log(`${SONG_ID}: audio ${total.toFixed(2)} s`);
-  for (const difficulty of ["easy", "normal", "hard"]) {
+  for (const difficulty of ["easy", "normal", "hard", "expert"]) {
     if (validate(SONG_ID, difficulty, total, path.join(ROOT, song.charts[difficulty]))) failed = true;
   }
 }

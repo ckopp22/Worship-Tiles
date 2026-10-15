@@ -48,10 +48,12 @@ const PRECACHE = [
   "songs/charts/amazing-grace-easy.json",
   "songs/charts/amazing-grace-normal.json",
   "songs/charts/amazing-grace-hard.json",
+  "songs/charts/amazing-grace-expert.json",
   "songs/audio/rock-of-ages.mp3", // second free starter
   "songs/charts/rock-of-ages-easy.json",
   "songs/charts/rock-of-ages-normal.json",
   "songs/charts/rock-of-ages-hard.json",
+  "songs/charts/rock-of-ages-expert.json",
 ];
 
 self.addEventListener("install", (event) => {

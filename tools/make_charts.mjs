@@ -1,7 +1,7 @@
-// Generates the Easy / Normal / Hard charts for a song from its note timings.
+// Generates the Easy / Normal / Hard / Expert charts for a song from its note timings.
 //   node tools/make_charts.mjs [song-id]        (default: amazing-grace)
 // Reads  tools/data/<id>.notes.json   (MIDI-derived, or estimated from audio by tools/analyze_song.mjs)
-// Writes songs/charts/<id>-{easy,normal,hard}.json (MDD 6.4 format, times in seconds of the shipped audio).
+// Writes songs/charts/<id>-{easy,normal,hard,expert}.json (MDD 6.4 format, times in seconds of the shipped audio).
 // Deterministic: the same input always gives the same charts.
 
 import fs from "node:fs";
@@ -16,6 +16,9 @@ const HOLD_MIN = 1.3;           // notes at least this long become holds
 const HOLD_TRIM = 0.1;          // hold duration = note length - this
 const DOUBLE_GAP = 0.5;         // consecutive short notes closer than this (same pitch or lane) -> one doubleTap
 const LONG_NOTE = 2.0;          // notes this long always count as phrase endings
+const EXPERT_CHORD_EVERY = 5;   // Expert: every Nth plain melody note becomes a two-finger chord
+const EXPERT_SPLIT_GAP = 0.55;  // Expert: melody gaps at least this long get an extra off-beat tap halfway
+const EXPERT_MIN_GAP = 0.2;     // Expert: harmony taps are only added at least this far (seconds) from every other note
 const NORMAL_DOUBLE_EVERY = 3;  // Normal: every Nth eligible eighth pair becomes a doubleTap, the rest drop the off-beat note
 // Seconds to add to MIDI times to get MP3 times, for MIDI-derived songs only. Amazing Grace's notes.json says
 // leadInSeconds = 0.5, but the MP3 has NO 0.5 s lead-in: the first sound lands ~0.04 s after the first MIDI note
@@ -137,6 +140,43 @@ function buildHard() {
   return out;
 }
 
+/** Expert: every melody note on its own (no merged pairs), more chords, and the harmony voices as extra taps. */
+function buildExpert() {
+  const out = melody.map((n, k) => {
+    if (isPhraseEnd(n)) return chord(n, harmonyLane(n), true);
+    if (isLong(n)) return hold(n);
+    return k % EXPERT_CHORD_EVERY === EXPERT_CHORD_EVERY - 1 ? chord(n, harmonyLane(n), false) : tap(n);
+  });
+  const starts = out.map((n) => n.time);
+  const holds = out.filter((n) => n.duration).map((n) => ({ lanes: n.lanes ?? [n.lane], s: n.time, e: n.time + n.duration }));
+  const extras = [];
+  harmonyTracks.forEach((track, k) => {
+    for (const h of track.notes) {
+      const time = round3(h.start + lead), lane = laneFor(h.pitch, harmonyRanges[k]);
+      if (starts.some((s) => Math.abs(s - time) < EXPERT_MIN_GAP)) continue;
+      if (holds.some((o) => o.lanes.includes(lane) && time > o.s - 0.1 && time < o.e + 0.1)) continue;
+      starts.push(time);
+      extras.push({ time, lane, type: "tap" });
+    }
+  });
+  // Off-beat taps: where two melody notes are far apart, add a tap halfway between them (alternating lanes).
+  let flip = 0;
+  melody.forEach((n, i) => {
+    const next = melody[i + 1];
+    if (!next || isLong(n)) return;
+    const gap = next.time - n.time;
+    if (gap < EXPERT_SPLIT_GAP) return;
+    const time = round3(n.time + gap / 2);
+    const lane = Math.max(0, Math.min(3, n.lane + (flip++ % 2 ? 1 : -1) * (n.lane === 0 ? -1 : 1)));
+    if (lane === n.lane || lane === next.lane) return;
+    if (starts.some((s) => Math.abs(s - time) < EXPERT_MIN_GAP)) return;
+    if (holds.some((o) => o.lanes.includes(lane) && time > o.s - 0.1 && time < o.e + 0.1)) return;
+    starts.push(time);
+    extras.push({ time, lane, type: "tap" });
+  });
+  return out.concat(extras);
+}
+
 function buildNormal() {
   const out = [];
   let pairs = 0;
@@ -214,7 +254,7 @@ function buildEasy() {
 }
 
 // ---- write ----
-const builders = { easy: buildEasy, normal: buildNormal, hard: buildHard };
+const builders = { easy: buildEasy, normal: buildNormal, hard: buildHard, expert: buildExpert };
 fs.mkdirSync(path.join(ROOT, "songs/charts"), { recursive: true });
 console.log(`${SONG_ID}: ${melody.length} source notes, pitch range ${melodyRange.lo}-${melodyRange.hi}, ${BPM} bpm, ${BEATS_PER_BAR}/4`);
 for (const [difficulty, build] of Object.entries(builders)) {
