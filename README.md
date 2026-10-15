@@ -25,10 +25,20 @@ Then open <http://localhost:8000>. (Opening `index.html` directly will not work:
 
 | Command | What it does |
 |---|---|
-| `node tools/make_charts.mjs` | Regenerates the Amazing Grace charts from `tools/data/amazing-grace.notes.json` |
-| `node tools/validate_charts.mjs` | Checks the charts (sorted, lanes, overlaps, audio length) |
+| `node tools/make_charts.mjs <song-id>` | Regenerates a song's three charts from `tools/data/<song-id>.notes.json` |
+| `node tools/analyze_song.mjs <song-id>` | Builds that notes file from the song's audio when there is no MIDI (macOS only; the rhythm is accurate, the lanes are an estimate) |
+| `node tools/trim_audio.mjs <in.mp3> <out.m4a>` | Trims a long song to about a minute with a fade-out (macOS only). Run `analyze_song` and `make_charts` after trimming |
+| `node tools/validate_charts.mjs` | Checks every song's charts (sorted, lanes, overlaps, audio length) |
 | `node tools/make_icons.mjs` | Regenerates the app icons in `icons/` |
 | `node tools/check_precache.mjs` | Checks that `sw.js` precaches every file the app needs |
+
+## Adding a song
+
+1. Put the audio in `songs/audio/` (mp3 or m4a; trim long songs with `tools/trim_audio.mjs` to about a minute).
+2. If you have MIDI-derived note timings, save them as `tools/data/<id>.notes.json`; otherwise run `node tools/analyze_song.mjs <id>`.
+3. Run `node tools/make_charts.mjs <id>`, then `node tools/validate_charts.mjs`.
+4. Add the song to `songs/songs.json` (id, title, credit, bpm, price, audio, charts) and a row to `docs/LICENSING.md`.
+5. Release (below). Free songs (price 0) are also cached for offline use at install, so add their files to `PRECACHE` in `sw.js` and run `node tools/check_precache.mjs`.
 
 ## Releasing an update
 

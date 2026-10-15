@@ -1,0 +1,26 @@
+{
+  "songId": "abide-with-me",
+  "difficulty": "easy",
+  "notes": [
+    {"time":1.19,"lane":2,"type":"tap"},
+    {"time":3.593,"lane":1,"type":"tap"},
+    {"time":5.991,"lane":1,"type":"tap"},
+    {"time":7.192,"lane":0,"type":"tap"},
+    {"time":13.195,"lane":0,"type":"tap"},
+    {"time":19.191,"lanes":[1,2],"type":"chord"},
+    {"time":20.393,"lane":2,"type":"hold","duration":2.303},
+    {"time":22.796,"lane":1,"type":"tap"},
+    {"time":23.992,"lane":1,"type":"tap"},
+    {"time":25.194,"lane":2,"type":"tap"},
+    {"time":26.395,"lane":3,"type":"tap"},
+    {"time":27.539,"lane":2,"type":"tap"},
+    {"time":29.994,"lane":2,"type":"hold","duration":2.298},
+    {"time":32.392,"lanes":[1,2],"type":"chord"},
+    {"time":33.593,"lane":2,"type":"hold","duration":2.304},
+    {"time":35.997,"lane":1,"type":"tap"},
+    {"time":38.394,"lane":1,"type":"tap"},
+    {"time":44.397,"lane":2,"type":"tap"},
+    {"time":56.419,"lane":1,"type":"tap"},
+    {"time":65.892,"lane":0,"type":"hold","duration":1.408}
+  ]
+}

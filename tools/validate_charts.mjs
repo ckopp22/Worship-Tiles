@@ -1,4 +1,4 @@
-// Validates the Amazing Grace charts.   node tools/validate_charts.mjs
+// Validates every song's charts.   node tools/validate_charts.mjs [song-id]
 // Checks: sorted by time, lanes 0-3, hold / chord durations, chords use two different lanes,
 // no two notes in a lane overlap in time (holds included), nothing after the end of the audio.
 
@@ -7,8 +7,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const SONG_ID = "amazing-grace";
-const AUDIO = path.join(ROOT, `songs/audio/${SONG_ID}.mp3`);
+import { spawnSync } from "node:child_process";
 const DOUBLE_TAP_SPAN = 0.25; // a doubleTap occupies its lane for the second-tap window
 
 /** Duration of a CBR mp3 from its first frame header (no dependencies). */
@@ -21,17 +20,36 @@ function mp3Duration(file) {
   const v1l3 = [0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320];
   const v2l3 = [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160];
   const kbps = (versionBits === 3 ? v1l3 : v2l3)[bitrateIdx];
-  if (layerBits !== 1 || !kbps) throw new Error("Unsupported mp3 header; pass the duration manually");
+  if (layerBits !== 1 || !kbps) throw new Error("Unsupported mp3 header");
   return (buf.length - pos) / (kbps * 125);
 }
 
-const audioDuration = mp3Duration(AUDIO);
-console.log(`Audio: ${audioDuration.toFixed(2)} s`);
+/** Audio length in seconds: mp3 by header, anything else (m4a) through macOS afinfo. */
+function audioDuration(file) {
+  if (file.endsWith(".mp3")) return mp3Duration(file);
+  const r = spawnSync("afinfo", [file]);
+  const m = /estimated duration: ([\d.]+)/.exec(String(r.stdout));
+  if (!m) throw new Error(`Can't read the length of ${file}`);
+  return Number(m[1]);
+}
+
+const catalog = JSON.parse(fs.readFileSync(path.join(ROOT, "songs/songs.json"), "utf8")).songs;
+const only = process.argv[2];
+const songs = catalog.filter((s) => s.charts && (!only || s.id === only));
 let failed = false;
 
-for (const difficulty of ["easy", "normal", "hard"]) {
+for (const song of songs) {
+  const SONG_ID = song.id;
+  const total = audioDuration(path.join(ROOT, song.audio));
+  console.log(`${SONG_ID}: audio ${total.toFixed(2)} s`);
+  for (const difficulty of ["easy", "normal", "hard"]) {
+    if (validate(SONG_ID, difficulty, total, path.join(ROOT, song.charts[difficulty]))) failed = true;
+  }
+}
+process.exit(failed ? 1 : 0);
+
+function validate(SONG_ID, difficulty, audioDuration, file) {
   const errors = [];
-  const file = path.join(ROOT, `songs/charts/${SONG_ID}-${difficulty}.json`);
   const chart = JSON.parse(fs.readFileSync(file, "utf8"));
   const err = (i, msg) => errors.push(`note ${i} (${JSON.stringify(chart.notes[i])}): ${msg}`);
   const intervals = [[], [], [], []]; // per lane: [start, end, noteIndex]
@@ -64,8 +82,7 @@ for (const difficulty of ["easy", "normal", "hard"]) {
     }
   });
 
-  console.log(`${difficulty.padEnd(6)} ${chart.notes.length} notes: ${errors.length ? "FAIL" : "ok"}`);
-  errors.slice(0, 10).forEach((e) => console.log("  - " + e));
-  if (errors.length) failed = true;
+  console.log(`  ${difficulty.padEnd(6)} ${chart.notes.length} notes: ${errors.length ? "FAIL" : "ok"}`);
+  errors.slice(0, 10).forEach((e) => console.log("    - " + e));
+  return errors.length > 0;
 }
-process.exit(failed ? 1 : 0);

@@ -1,0 +1,469 @@
+{
+ "songId": "holy-holy-holy",
+ "source": "audio-onsets",
+ "note": "Estimated from the audio by tools/analyze_song.mjs (no MIDI). start/end are seconds in the shipped audio file.",
+ "leadInSeconds": 0,
+ "audioOffsetSeconds": 0,
+ "bpm": 110,
+ "beatsPerBar": 4,
+ "gridOrigin": 2.176,
+ "beatTolerance": 0.2,
+ "phraseGrid": false,
+ "rangePercentile": true,
+ "laneBands": "quantile",
+ "doubleSpacing": 4,
+ "normalSubdivision": 2,
+ "normalTarget": 0.7,
+ "tracks": [
+  {
+   "index": 1,
+   "name": "Melody",
+   "notes": [
+    {
+     "start": 0.54,
+     "end": 1.086,
+     "pitch": 64,
+     "vel": 62.77
+    },
+    {
+     "start": 1.086,
+     "end": 1.898,
+     "pitch": 64,
+     "vel": 38.2
+    },
+    {
+     "start": 1.898,
+     "end": 2.171,
+     "pitch": 62,
+     "vel": 71.48
+    },
+    {
+     "start": 2.171,
+     "end": 2.763,
+     "pitch": 62,
+     "vel": 39.59
+    },
+    {
+     "start": 2.763,
+     "end": 2.955,
+     "pitch": 62,
+     "vel": 2.18
+    },
+    {
+     "start": 2.955,
+     "end": 4.354,
+     "pitch": 74,
+     "vel": 1.77
+    },
+    {
+     "start": 4.354,
+     "end": 5.997,
+     "pitch": 84,
+     "vel": 138.3
+    },
+    {
+     "start": 5.997,
+     "end": 6.542,
+     "pitch": 81,
+     "vel": 32.39
+    },
+    {
+     "start": 6.542,
+     "end": 7.088,
+     "pitch": 67,
+     "vel": 43.31
+    },
+    {
+     "start": 7.088,
+     "end": 7.634,
+     "pitch": 67,
+     "vel": 23.23
+    },
+    {
+     "start": 7.634,
+     "end": 8.179,
+     "pitch": 69,
+     "vel": 43.06
+    },
+    {
+     "start": 8.179,
+     "end": 8.719,
+     "pitch": 71,
+     "vel": 26.01
+    },
+    {
+     "start": 8.719,
+     "end": 9.271,
+     "pitch": 69,
+     "vel": 34.98
+    },
+    {
+     "start": 9.271,
+     "end": 11.453,
+     "pitch": 71,
+     "vel": 23.38
+    },
+    {
+     "start": 11.453,
+     "end": 11.993,
+     "pitch": 84,
+     "vel": 26.26
+    },
+    {
+     "start": 11.993,
+     "end": 14.993,
+     "pitch": 69,
+     "vel": 42.9
+    },
+    {
+     "start": 16.358,
+     "end": 16.904,
+     "pitch": 73,
+     "vel": 46.83
+    },
+    {
+     "start": 16.904,
+     "end": 17.45,
+     "pitch": 73,
+     "vel": 49.77
+    },
+    {
+     "start": 17.45,
+     "end": 19.36,
+     "pitch": 69,
+     "vel": 32.13
+    },
+    {
+     "start": 19.36,
+     "end": 19.632,
+     "pitch": 61,
+     "vel": 56.28
+    },
+    {
+     "start": 19.632,
+     "end": 20.178,
+     "pitch": 61,
+     "vel": 24.59
+    },
+    {
+     "start": 20.178,
+     "end": 20.724,
+     "pitch": 64,
+     "vel": 2.07
+    },
+    {
+     "start": 20.724,
+     "end": 21.815,
+     "pitch": 67,
+     "vel": 20.04
+    },
+    {
+     "start": 21.815,
+     "end": 23.452,
+     "pitch": 84,
+     "vel": 66.93
+    },
+    {
+     "start": 23.452,
+     "end": 23.998,
+     "pitch": 81,
+     "vel": 30.2
+    },
+    {
+     "start": 23.998,
+     "end": 25.629,
+     "pitch": 69,
+     "vel": 39.48
+    },
+    {
+     "start": 25.629,
+     "end": 26.175,
+     "pitch": 71,
+     "vel": 30.03
+    },
+    {
+     "start": 26.175,
+     "end": 26.726,
+     "pitch": 69,
+     "vel": 33.33
+    },
+    {
+     "start": 26.726,
+     "end": 28.903,
+     "pitch": 71,
+     "vel": 23.92
+    },
+    {
+     "start": 28.903,
+     "end": 29.449,
+     "pitch": 84,
+     "vel": 23.75
+    },
+    {
+     "start": 29.449,
+     "end": 30.54,
+     "pitch": 69,
+     "vel": 52.39
+    },
+    {
+     "start": 30.54,
+     "end": 31.086,
+     "pitch": 67,
+     "vel": 44.93
+    },
+    {
+     "start": 31.086,
+     "end": 31.631,
+     "pitch": 67,
+     "vel": 13.59
+    },
+    {
+     "start": 31.631,
+     "end": 33.28,
+     "pitch": 69,
+     "vel": 65.66
+    },
+    {
+     "start": 33.28,
+     "end": 33.814,
+     "pitch": 71,
+     "vel": 2.53
+    },
+    {
+     "start": 33.814,
+     "end": 35.451,
+     "pitch": 62,
+     "vel": 60.61
+    },
+    {
+     "start": 35.451,
+     "end": 35.997,
+     "pitch": 64,
+     "vel": 24.5
+    },
+    {
+     "start": 35.997,
+     "end": 36.815,
+     "pitch": 64,
+     "vel": 26.6
+    },
+    {
+     "start": 36.815,
+     "end": 37.088,
+     "pitch": 64,
+     "vel": 32.23
+    },
+    {
+     "start": 37.088,
+     "end": 39.538,
+     "pitch": 62,
+     "vel": 21.91
+    },
+    {
+     "start": 39.538,
+     "end": 40.083,
+     "pitch": 84,
+     "vel": 126.54
+    },
+    {
+     "start": 40.083,
+     "end": 40.629,
+     "pitch": 84,
+     "vel": 33.1
+    },
+    {
+     "start": 40.629,
+     "end": 41.181,
+     "pitch": 81,
+     "vel": 40.04
+    },
+    {
+     "start": 41.181,
+     "end": 41.72,
+     "pitch": 69,
+     "vel": 28.68
+    },
+    {
+     "start": 41.72,
+     "end": 42.272,
+     "pitch": 67,
+     "vel": 42.91
+    },
+    {
+     "start": 42.272,
+     "end": 42.812,
+     "pitch": 69,
+     "vel": 22.38
+    },
+    {
+     "start": 42.812,
+     "end": 43.357,
+     "pitch": 69,
+     "vel": 41.27
+    },
+    {
+     "start": 43.357,
+     "end": 46.357,
+     "pitch": 71,
+     "vel": 34.21
+    },
+    {
+     "start": 46.631,
+     "end": 47.177,
+     "pitch": 84,
+     "vel": 25.53
+    },
+    {
+     "start": 47.177,
+     "end": 50.177,
+     "pitch": 69,
+     "vel": 49.55
+    },
+    {
+     "start": 50.997,
+     "end": 52.634,
+     "pitch": 73,
+     "vel": 33.33
+    },
+    {
+     "start": 52.634,
+     "end": 54.538,
+     "pitch": 69,
+     "vel": 30.24
+    },
+    {
+     "start": 54.538,
+     "end": 54.811,
+     "pitch": 61,
+     "vel": 61.01
+    },
+    {
+     "start": 54.811,
+     "end": 55.356,
+     "pitch": 61,
+     "vel": 26.16
+    },
+    {
+     "start": 55.356,
+     "end": 55.908,
+     "pitch": 64,
+     "vel": 2.45
+    },
+    {
+     "start": 55.908,
+     "end": 56.459,
+     "pitch": 64,
+     "vel": 22.01
+    },
+    {
+     "start": 56.459,
+     "end": 56.993,
+     "pitch": 67,
+     "vel": 2.19
+    },
+    {
+     "start": 56.993,
+     "end": 58.63,
+     "pitch": 84,
+     "vel": 68.9
+    },
+    {
+     "start": 58.63,
+     "end": 59.176,
+     "pitch": 81,
+     "vel": 28.86
+    },
+    {
+     "start": 59.176,
+     "end": 61.904,
+     "pitch": 69,
+     "vel": 44.52
+    },
+    {
+     "start": 61.904,
+     "end": 64.087,
+     "pitch": 71,
+     "vel": 24.15
+    },
+    {
+     "start": 64.087,
+     "end": 64.633,
+     "pitch": 84,
+     "vel": 27.94
+    },
+    {
+     "start": 64.633,
+     "end": 65.173,
+     "pitch": 69,
+     "vel": 47.69
+    },
+    {
+     "start": 65.173,
+     "end": 66.815,
+     "pitch": 66,
+     "vel": 2.26
+    },
+    {
+     "start": 66.815,
+     "end": 67.361,
+     "pitch": 69,
+     "vel": 56.99
+    },
+    {
+     "start": 67.361,
+     "end": 67.907,
+     "pitch": 69,
+     "vel": 29.04
+    },
+    {
+     "start": 67.907,
+     "end": 68.998,
+     "pitch": 71,
+     "vel": 27.15
+    },
+    {
+     "start": 68.998,
+     "end": 69.538,
+     "pitch": 71,
+     "vel": 57.52
+    },
+    {
+     "start": 69.538,
+     "end": 70.084,
+     "pitch": 60,
+     "vel": 12.17
+    },
+    {
+     "start": 70.084,
+     "end": 70.635,
+     "pitch": 60,
+     "vel": 54.39
+    },
+    {
+     "start": 70.635,
+     "end": 71.181,
+     "pitch": 64,
+     "vel": 22.57
+    },
+    {
+     "start": 71.181,
+     "end": 71.993,
+     "pitch": 64,
+     "vel": 26.52
+    },
+    {
+     "start": 71.993,
+     "end": 72.266,
+     "pitch": 66,
+     "vel": 34.95
+    },
+    {
+     "start": 72.266,
+     "end": 74.6,
+     "pitch": 62,
+     "vel": 19.97
+    }
+   ]
+  }
+ ]
+}

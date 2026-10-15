@@ -1,0 +1,28 @@
+{
+  "songId": "holy-holy-holy",
+  "difficulty": "easy",
+  "notes": [
+    {"time":1.086,"lane":1,"type":"tap"},
+    {"time":2.171,"lane":0,"type":"tap"},
+    {"time":4.354,"lane":1,"type":"tap"},
+    {"time":6.542,"lane":1,"type":"tap"},
+    {"time":7.634,"lane":2,"type":"tap"},
+    {"time":8.719,"lanes":[2,3],"type":"chord"},
+    {"time":11.993,"lane":2,"type":"hold","duration":2.9},
+    {"time":16.358,"lane":3,"type":"tap"},
+    {"time":17.45,"lane":2,"type":"tap"},
+    {"time":19.632,"lane":1,"type":"tap"},
+    {"time":20.724,"lane":1,"type":"tap"},
+    {"time":21.815,"lane":2,"type":"tap"},
+    {"time":23.998,"lane":2,"type":"tap"},
+    {"time":26.175,"lanes":[2,3],"type":"chord"},
+    {"time":29.449,"lane":2,"type":"tap"},
+    {"time":30.54,"lane":1,"type":"tap"},
+    {"time":31.631,"lane":2,"type":"tap"},
+    {"time":33.814,"lane":1,"type":"tap"},
+    {"time":35.997,"lane":1,"type":"tap"},
+    {"time":37.088,"lane":0,"type":"hold","duration":2.35},
+    {"time":54.538,"lane":0,"type":"tap"},
+    {"time":71.993,"lanes":[1,2],"type":"chord"}
+  ]
+}

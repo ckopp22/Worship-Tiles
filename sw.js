@@ -43,11 +43,15 @@ const PRECACHE = [
   "icons/icon-512.png",
   "icons/icon-maskable-512.png",
   "songs/songs.json",
-  // free starter song, so the game works offline from the first visit
+  // free starter songs, so the game works offline from the first visit
   "songs/audio/amazing-grace.mp3",
   "songs/charts/amazing-grace-easy.json",
   "songs/charts/amazing-grace-normal.json",
   "songs/charts/amazing-grace-hard.json",
+  "songs/audio/rock-of-ages.mp3", // second free starter
+  "songs/charts/rock-of-ages-easy.json",
+  "songs/charts/rock-of-ages-normal.json",
+  "songs/charts/rock-of-ages-hard.json",
 ];
 
 self.addEventListener("install", (event) => {

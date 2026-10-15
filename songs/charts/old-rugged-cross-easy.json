@@ -1,0 +1,31 @@
+{
+  "songId": "old-rugged-cross",
+  "difficulty": "easy",
+  "notes": [
+    {"time":1.289,"lane":2,"type":"tap"},
+    {"time":2.497,"lane":3,"type":"tap"},
+    {"time":3.094,"lane":2,"type":"tap"},
+    {"time":6.101,"lane":1,"type":"tap"},
+    {"time":6.705,"lane":0,"type":"tap"},
+    {"time":7.878,"lanes":[1,2],"type":"chord"},
+    {"time":8.493,"lane":0,"type":"tap"},
+    {"time":9.695,"lane":1,"type":"tap"},
+    {"time":10.293,"lane":2,"type":"tap"},
+    {"time":11.5,"lane":1,"type":"tap"},
+    {"time":12.098,"lane":1,"type":"tap"},
+    {"time":13.294,"lane":2,"type":"tap"},
+    {"time":13.898,"lane":3,"type":"tap"},
+    {"time":15.082,"lanes":[2,3],"type":"chord"},
+    {"time":15.697,"lane":1,"type":"tap"},
+    {"time":16.899,"lane":2,"type":"tap"},
+    {"time":17.497,"lane":2,"type":"tap"},
+    {"time":18.106,"lane":2,"type":"tap"},
+    {"time":18.698,"lane":1,"type":"tap"},
+    {"time":19.296,"lane":1,"type":"tap"},
+    {"time":20.498,"lane":1,"type":"tap"},
+    {"time":22.286,"lanes":[2,3],"type":"chord"},
+    {"time":22.895,"lane":2,"type":"tap"},
+    {"time":26.494,"lane":3,"type":"tap"},
+    {"time":29.472,"lane":2,"type":"tap"}
+  ]
+}

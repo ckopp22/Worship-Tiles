@@ -1,0 +1,30 @@
+{
+  "songId": "crown-him-with-many-crowns",
+  "difficulty": "easy",
+  "notes": [
+    {"time":0.534,"lane":3,"type":"tap"},
+    {"time":1.625,"lane":3,"type":"tap"},
+    {"time":2.717,"lane":2,"type":"hold","duration":2.9},
+    {"time":5.991,"lane":1,"type":"tap"},
+    {"time":9.265,"lane":2,"type":"tap"},
+    {"time":11.447,"lanes":[1,2],"type":"chord"},
+    {"time":13.63,"lane":2,"type":"tap"},
+    {"time":15.813,"lane":3,"type":"hold","duration":2.082},
+    {"time":17.995,"lane":2,"type":"tap"},
+    {"time":20.178,"lane":1,"type":"hold","duration":2.083},
+    {"time":22.361,"lane":2,"type":"tap"},
+    {"time":23.452,"lane":3,"type":"tap"},
+    {"time":24.538,"lane":2,"type":"tap"},
+    {"time":25.53,"lanes":[1,2],"type":"chord"},
+    {"time":27.818,"lane":1,"type":"tap"},
+    {"time":28.903,"lane":2,"type":"hold","duration":2.628},
+    {"time":34.371,"lane":3,"type":"tap"},
+    {"time":35.451,"lane":2,"type":"tap"},
+    {"time":36.542,"lane":3,"type":"tap"},
+    {"time":40.908,"lane":2,"type":"tap"},
+    {"time":41.999,"lane":1,"type":"hold","duration":2.344},
+    {"time":45.267,"lanes":[2,3],"type":"chord"},
+    {"time":56.181,"lane":1,"type":"tap"},
+    {"time":60.529,"lane":0,"type":"tap"}
+  ]
+}

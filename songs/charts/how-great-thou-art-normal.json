@@ -1,0 +1,28 @@
+{
+  "songId": "how-great-thou-art",
+  "difficulty": "normal",
+  "notes": [
+    {"time":0.848,"lane":2,"type":"tap"},
+    {"time":1.248,"lane":1,"type":"tap"},
+    {"time":2.444,"lane":3,"type":"hold","duration":1.502},
+    {"time":4.046,"lane":1,"type":"hold","duration":1.311},
+    {"time":5.62,"lane":1,"type":"doubleTap"},
+    {"time":6.444,"lane":2,"type":"tap"},
+    {"time":7.245,"lane":3,"type":"hold","duration":1.502},
+    {"time":8.847,"lane":3,"type":"tap"},
+    {"time":9.248,"lane":3,"type":"hold","duration":1.496},
+    {"time":10.844,"lane":1,"type":"tap"},
+    {"time":11.245,"lane":1,"type":"tap"},
+    {"time":12.847,"lane":2,"type":"tap"},
+    {"time":13.648,"lane":2,"type":"tap"},
+    {"time":14.048,"lane":1,"type":"tap"},
+    {"time":15.244,"lane":3,"type":"hold","duration":1.502},
+    {"time":16.846,"lane":1,"type":"tap"},
+    {"time":17.648,"lanes":[2,3],"type":"chord"},
+    {"time":20.045,"lane":3,"type":"tap"},
+    {"time":20.446,"lane":3,"type":"tap"},
+    {"time":20.846,"lane":3,"type":"tap"},
+    {"time":22.448,"lane":3,"type":"tap"},
+    {"time":23.249,"lanes":[1,2],"type":"chord","duration":2.9}
+  ]
+}

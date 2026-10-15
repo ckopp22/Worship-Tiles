@@ -1,0 +1,19 @@
+{
+  "songId": "how-great-thou-art",
+  "difficulty": "easy",
+  "notes": [
+    {"time":0.848,"lane":2,"type":"tap"},
+    {"time":2.444,"lane":3,"type":"tap"},
+    {"time":4.046,"lane":2,"type":"tap"},
+    {"time":5.62,"lane":1,"type":"tap"},
+    {"time":7.245,"lane":2,"type":"tap"},
+    {"time":8.847,"lanes":[3,2],"type":"chord"},
+    {"time":12.139,"lane":2,"type":"tap"},
+    {"time":13.648,"lane":2,"type":"tap"},
+    {"time":15.244,"lane":3,"type":"tap"},
+    {"time":16.846,"lane":2,"type":"tap"},
+    {"time":20.045,"lane":3,"type":"tap"},
+    {"time":21.647,"lane":3,"type":"tap"},
+    {"time":23.249,"lane":2,"type":"hold","duration":2.9}
+  ]
+}

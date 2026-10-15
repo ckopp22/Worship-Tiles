@@ -17,53 +17,157 @@
       "previewStart": 0
     },
     {
-      "id": "placeholder-hymn-2",
-      "title": "Placeholder Hymn 2",
-      "credit": "PLACEHOLDER: reuses the built-in test track",
-      "bpm": 72,
+      "id": "rock-of-ages",
+      "title": "Rock of Ages",
+      "credit": "Words: Augustus Toplady (1763)",
+      "bpm": 100,
       "price": 0,
-      "builtin": "test-melody",
-      "placeholder": true,
+      "audio": "songs/audio/rock-of-ages.mp3",
+      "charts": {
+        "easy": "songs/charts/rock-of-ages-easy.json",
+        "normal": "songs/charts/rock-of-ages-normal.json",
+        "hard": "songs/charts/rock-of-ages-hard.json"
+      },
       "previewStart": 0
     },
     {
-      "id": "placeholder-hymn-3",
-      "title": "Placeholder Hymn 3",
-      "credit": "PLACEHOLDER: reuses the built-in test track",
-      "bpm": 72,
+      "id": "old-rugged-cross",
+      "title": "The Old Rugged Cross",
+      "credit": "Words and music: George Bennard (1912)",
+      "bpm": 100,
       "price": 300,
-      "builtin": "test-melody",
-      "placeholder": true,
+      "audio": "songs/audio/old-rugged-cross.mp3",
+      "charts": {
+        "easy": "songs/charts/old-rugged-cross-easy.json",
+        "normal": "songs/charts/old-rugged-cross-normal.json",
+        "hard": "songs/charts/old-rugged-cross-hard.json"
+      },
       "previewStart": 0
     },
     {
-      "id": "placeholder-hymn-4",
-      "title": "Placeholder Hymn 4",
-      "credit": "PLACEHOLDER: reuses the built-in test track",
-      "bpm": 72,
+      "id": "how-great-thou-art",
+      "title": "How Great Thou Art",
+      "credit": "Words: Carl Boberg (1885), Swedish folk melody",
+      "bpm": 75,
+      "price": 400,
+      "audio": "songs/audio/how-great-thou-art.mp3",
+      "charts": {
+        "easy": "songs/charts/how-great-thou-art-easy.json",
+        "normal": "songs/charts/how-great-thou-art-normal.json",
+        "hard": "songs/charts/how-great-thou-art-hard.json"
+      },
+      "previewStart": 0
+    },
+    {
+      "id": "holy-holy-holy",
+      "title": "Holy, Holy, Holy",
+      "credit": "Words: Reginald Heber (1826)",
+      "bpm": 110,
+      "price": 500,
+      "audio": "songs/audio/holy-holy-holy.m4a",
+      "charts": {
+        "easy": "songs/charts/holy-holy-holy-easy.json",
+        "normal": "songs/charts/holy-holy-holy-normal.json",
+        "hard": "songs/charts/holy-holy-holy-hard.json"
+      },
+      "previewStart": 0
+    },
+    {
+      "id": "blessed-assurance",
+      "title": "Blessed Assurance",
+      "credit": "Words: Fanny J. Crosby (1873)",
+      "bpm": 100,
       "price": 600,
-      "builtin": "test-melody",
-      "placeholder": true,
+      "audio": "songs/audio/blessed-assurance.m4a",
+      "charts": {
+        "easy": "songs/charts/blessed-assurance-easy.json",
+        "normal": "songs/charts/blessed-assurance-normal.json",
+        "hard": "songs/charts/blessed-assurance-hard.json"
+      },
       "previewStart": 0
     },
     {
-      "id": "placeholder-hymn-5",
-      "title": "Placeholder Hymn 5",
-      "credit": "PLACEHOLDER: reuses the built-in test track",
-      "bpm": 72,
+      "id": "what-a-friend-we-have-in-jesus",
+      "title": "What a Friend We Have in Jesus",
+      "credit": "Words: Joseph Scriven (1855)",
+      "bpm": 100,
+      "price": 700,
+      "audio": "songs/audio/what-a-friend-we-have-in-jesus.m4a",
+      "charts": {
+        "easy": "songs/charts/what-a-friend-we-have-in-jesus-easy.json",
+        "normal": "songs/charts/what-a-friend-we-have-in-jesus-normal.json",
+        "hard": "songs/charts/what-a-friend-we-have-in-jesus-hard.json"
+      },
+      "previewStart": 0
+    },
+    {
+      "id": "come-thou-fount",
+      "title": "Come, Thou Fount of Every Blessing",
+      "credit": "Words: Robert Robinson (1758)",
+      "bpm": 90,
+      "price": 800,
+      "audio": "songs/audio/come-thou-fount.m4a",
+      "charts": {
+        "easy": "songs/charts/come-thou-fount-easy.json",
+        "normal": "songs/charts/come-thou-fount-normal.json",
+        "hard": "songs/charts/come-thou-fount-hard.json"
+      },
+      "previewStart": 0
+    },
+    {
+      "id": "abide-with-me",
+      "title": "Abide With Me",
+      "credit": "Words: Henry F. Lyte (1847)",
+      "bpm": 100,
       "price": 900,
-      "builtin": "test-melody",
-      "placeholder": true,
+      "audio": "songs/audio/abide-with-me.m4a",
+      "charts": {
+        "easy": "songs/charts/abide-with-me-easy.json",
+        "normal": "songs/charts/abide-with-me-normal.json",
+        "hard": "songs/charts/abide-with-me-hard.json"
+      },
       "previewStart": 0
     },
     {
-      "id": "placeholder-hymn-6",
-      "title": "Placeholder Hymn 6",
-      "credit": "PLACEHOLDER: reuses the built-in test track",
-      "bpm": 72,
+      "id": "be-thou-my-vision",
+      "title": "Be Thou My Vision",
+      "credit": "Ancient Irish hymn; English: Eleanor Hull (1912)",
+      "bpm": 80,
+      "price": 1000,
+      "audio": "songs/audio/be-thou-my-vision.m4a",
+      "charts": {
+        "easy": "songs/charts/be-thou-my-vision-easy.json",
+        "normal": "songs/charts/be-thou-my-vision-normal.json",
+        "hard": "songs/charts/be-thou-my-vision-hard.json"
+      },
+      "previewStart": 0
+    },
+    {
+      "id": "i-need-thee-every-hour",
+      "title": "I Need Thee Every Hour",
+      "credit": "Words: Annie S. Hawks (1872)",
+      "bpm": 80,
+      "price": 1100,
+      "audio": "songs/audio/i-need-thee-every-hour.m4a",
+      "charts": {
+        "easy": "songs/charts/i-need-thee-every-hour-easy.json",
+        "normal": "songs/charts/i-need-thee-every-hour-normal.json",
+        "hard": "songs/charts/i-need-thee-every-hour-hard.json"
+      },
+      "previewStart": 0
+    },
+    {
+      "id": "crown-him-with-many-crowns",
+      "title": "Crown Him with Many Crowns",
+      "credit": "Words: Matthew Bridges (1851)",
+      "bpm": 110,
       "price": 1200,
-      "builtin": "test-melody",
-      "placeholder": true,
+      "audio": "songs/audio/crown-him-with-many-crowns.m4a",
+      "charts": {
+        "easy": "songs/charts/crown-him-with-many-crowns-easy.json",
+        "normal": "songs/charts/crown-him-with-many-crowns-normal.json",
+        "hard": "songs/charts/crown-him-with-many-crowns-hard.json"
+      },
       "previewStart": 0
     }
   ]

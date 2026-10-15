@@ -1,0 +1,211 @@
+{
+ "songId": "how-great-thou-art",
+ "source": "audio-onsets",
+ "note": "Estimated from the audio by tools/analyze_song.mjs (no MIDI). start/end are seconds in the shipped audio file.",
+ "leadInSeconds": 0,
+ "audioOffsetSeconds": 0.012,
+ "bpm": 75,
+ "beatsPerBar": 4,
+ "gridOrigin": 0.83,
+ "beatTolerance": 0.2,
+ "phraseGrid": false,
+ "rangePercentile": true,
+ "laneBands": "quantile",
+ "doubleSpacing": 4,
+ "normalSubdivision": 2,
+ "normalTarget": 0.7,
+ "tracks": [
+  {
+   "index": 1,
+   "name": "Melody",
+   "notes": [
+    {
+     "start": 0.836,
+     "end": 1.236,
+     "pitch": 60,
+     "vel": 48.63
+    },
+    {
+     "start": 1.236,
+     "end": 1.637,
+     "pitch": 53,
+     "vel": 36.33
+    },
+    {
+     "start": 1.637,
+     "end": 2.432,
+     "pitch": 53,
+     "vel": 28.77
+    },
+    {
+     "start": 2.432,
+     "end": 4.034,
+     "pitch": 66,
+     "vel": 35.6
+    },
+    {
+     "start": 4.034,
+     "end": 5.445,
+     "pitch": 55,
+     "vel": 60.67
+    },
+    {
+     "start": 5.445,
+     "end": 5.608,
+     "pitch": 53,
+     "vel": 4.66
+    },
+    {
+     "start": 5.608,
+     "end": 5.851,
+     "pitch": 53,
+     "vel": 4.13
+    },
+    {
+     "start": 5.851,
+     "end": 6.432,
+     "pitch": 53,
+     "vel": 5.26
+    },
+    {
+     "start": 6.432,
+     "end": 7.233,
+     "pitch": 60,
+     "vel": 85.24
+    },
+    {
+     "start": 7.233,
+     "end": 8.835,
+     "pitch": 69,
+     "vel": 48.29
+    },
+    {
+     "start": 8.835,
+     "end": 9.236,
+     "pitch": 67,
+     "vel": 48.05
+    },
+    {
+     "start": 9.236,
+     "end": 10.832,
+     "pitch": 65,
+     "vel": 33.13
+    },
+    {
+     "start": 10.832,
+     "end": 11.233,
+     "pitch": 57,
+     "vel": 28.88
+    },
+    {
+     "start": 11.233,
+     "end": 11.813,
+     "pitch": 55,
+     "vel": 34.84
+    },
+    {
+     "start": 11.813,
+     "end": 12.127,
+     "pitch": 55,
+     "vel": 4.6
+    },
+    {
+     "start": 12.127,
+     "end": 12.312,
+     "pitch": 48,
+     "vel": 6.33
+    },
+    {
+     "start": 12.312,
+     "end": 12.835,
+     "pitch": 60,
+     "vel": 5.46
+    },
+    {
+     "start": 12.835,
+     "end": 13.636,
+     "pitch": 60,
+     "vel": 65.8
+    },
+    {
+     "start": 13.636,
+     "end": 14.036,
+     "pitch": 60,
+     "vel": 39.15
+    },
+    {
+     "start": 14.036,
+     "end": 14.437,
+     "pitch": 53,
+     "vel": 33.44
+    },
+    {
+     "start": 14.437,
+     "end": 15.232,
+     "pitch": 53,
+     "vel": 26.47
+    },
+    {
+     "start": 15.232,
+     "end": 16.834,
+     "pitch": 66,
+     "vel": 37.31
+    },
+    {
+     "start": 16.834,
+     "end": 17.235,
+     "pitch": 55,
+     "vel": 56.95
+    },
+    {
+     "start": 17.235,
+     "end": 17.636,
+     "pitch": 55,
+     "vel": 26.45
+    },
+    {
+     "start": 17.636,
+     "end": 20.033,
+     "pitch": 60,
+     "vel": 34.2
+    },
+    {
+     "start": 20.033,
+     "end": 20.434,
+     "pitch": 69,
+     "vel": 46.3
+    },
+    {
+     "start": 20.434,
+     "end": 20.834,
+     "pitch": 69,
+     "vel": 29.11
+    },
+    {
+     "start": 20.834,
+     "end": 21.635,
+     "pitch": 65,
+     "vel": 40.49
+    },
+    {
+     "start": 21.635,
+     "end": 22.436,
+     "pitch": 65,
+     "vel": 23.9
+    },
+    {
+     "start": 22.436,
+     "end": 23.237,
+     "pitch": 65,
+     "vel": 50.65
+    },
+    {
+     "start": 23.237,
+     "end": 26.237,
+     "pitch": 58,
+     "vel": 40.7
+    }
+   ]
+  }
+ ]
+}
