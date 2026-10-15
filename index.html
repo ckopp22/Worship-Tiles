@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Worship Tiles</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1a3a">
+  <meta name="description" content="A reverent rhythm-tap game built around classic hymns.">
+
+  <!-- Apple PWA -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Worship Tiles">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="manifest" href="manifest.webmanifest">
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Fixed-portrait stage: scales to fit, letterboxed on wide displays -->
+  <main id="stage">
+
+    <!-- ===== Main Menu ===== -->
+    <section id="screen-menu" class="screen" data-screen="menu" aria-label="Main menu">
+      <div class="menu-bg" aria-hidden="true"></div>
+
+      <header class="topbar">
+        <div class="bank" aria-label="Bank balance">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="#f2c460" stroke="#a8761c" stroke-width="1.5"/><circle cx="12" cy="12" r="5.5" fill="none" stroke="#a8761c" stroke-width="1.2"/></svg>
+          <span id="bank-amount">0</span>
+        </div>
+        <button id="sound-toggle" class="icon-btn" type="button" aria-label="Sound" aria-pressed="true">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/>
+            <g class="sound-on" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M16 8.5a5 5 0 0 1 0 7"/><path d="M18.5 6a8.5 8.5 0 0 1 0 12"/>
+            </g>
+            <g class="sound-off" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M16.5 9.5l5 5M21.5 9.5l-5 5"/>
+            </g>
+          </svg>
+        </button>
+      </header>
+
+      <div class="hero">
+        <svg class="cross" viewBox="0 0 40 56" aria-hidden="true">
+          <defs><linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff0c2"/><stop offset="1" stop-color="#d9a441"/></linearGradient></defs>
+          <path d="M16 0h8v16h16v8H24v32h-8V24H0v-8h16z" fill="url(#gold)"/>
+        </svg>
+        <h1 class="title">Worship Tiles</h1>
+      </div>
+
+      <nav class="menu-buttons" aria-label="Main menu">
+        <button class="btn btn--primary" type="button" data-go="library" aria-label="Play">Play</button>
+        <button class="btn" type="button" data-go="store" aria-label="Song Store">Song Store</button>
+        <button class="btn" type="button" data-go="howto" aria-label="How to Play">How to Play</button>
+        <button class="btn" type="button" data-go="settings" aria-label="Settings">Settings</button>
+      </nav>
+
+      <footer class="verse">
+        <p>“The <span class="sc">Lord</span> is my light and my salvation; whom shall I fear?”</p>
+        <cite>Psalm 27:1 KJV</cite>
+      </footer>
+    </section>
+
+    <!-- ===== How to Play ===== -->
+    <section id="screen-howto" class="screen screen--plain" data-screen="howto" aria-label="How to play">
+      <h2 class="screen-title">How to Play</h2>
+      <div id="howto-cards" class="cards" tabindex="0"></div>
+      <div class="howto-nav">
+        <button id="howto-prev" class="icon-btn" type="button" aria-label="Previous card">‹</button>
+        <div id="howto-dots" class="dots" aria-hidden="true"></div>
+        <button id="howto-next" class="icon-btn" type="button" aria-label="Next card">›</button>
+      </div>
+      <button id="howto-done" class="btn btn--primary" type="button">Got it</button>
+    </section>
+
+    <!-- ===== Placeholder screens (later phases) ===== -->
+    <section class="screen screen--plain" data-screen="library" aria-label="Song Library">
+      <button class="btn btn--small" type="button" data-go="menu">‹ Back</button>
+      <h2 class="screen-title">Song Library</h2>
+      <p class="placeholder">Coming in Phase 4.</p>
+    </section>
+
+    <section class="screen screen--plain" data-screen="store" aria-label="Song Store">
+      <button class="btn btn--small" type="button" data-go="menu">‹ Back</button>
+      <h2 class="screen-title">Song Store</h2>
+      <p class="placeholder">Coming in Phase 5.</p>
+    </section>
+
+    <section class="screen screen--plain" data-screen="settings" aria-label="Settings">
+      <button class="btn btn--small" type="button" data-go="menu">‹ Back</button>
+      <h2 class="screen-title">Settings</h2>
+      <p class="placeholder">Coming in Phase 6.</p>
+    </section>
+
+    <section class="screen screen--plain" data-screen="gameplay" aria-label="Gameplay">
+      <button class="btn btn--small" type="button" data-go="library">‹ Back</button>
+      <h2 class="screen-title">Gameplay</h2>
+      <p class="placeholder">Coming in Phase 3.</p>
+    </section>
+
+    <section class="screen screen--plain" data-screen="results" aria-label="Results">
+      <button class="btn btn--small" type="button" data-go="menu">‹ Back</button>
+      <h2 class="screen-title">Results</h2>
+      <p class="placeholder">Coming in Phase 5.</p>
+    </section>
+  </main>
+
+  <!-- Shown on touch devices held in landscape (iOS ignores the manifest orientation lock) -->
+  <div id="rotate-overlay" role="alert">
+    <svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true"><rect x="20" y="6" width="24" height="44" rx="4" fill="none" stroke="#f2c460" stroke-width="3"/><path d="M12 56h40" stroke="#f2c460" stroke-width="3" stroke-linecap="round"/></svg>
+    <p>Please rotate your phone to portrait</p>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
