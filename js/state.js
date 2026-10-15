@@ -75,3 +75,20 @@ function set(section, key, value) {
 
 export const setSetting = (key, value) => set("settings", key, value);
 export const setProfile = (key, value) => set("profile", key, value);
+
+/** Remember the last-used difficulty for a song. */
+export function setLastDifficulty(songId, difficulty) {
+  setProfile("lastDifficulty", { ...state.profile.lastDifficulty, [songId]: difficulty });
+}
+
+/** Keep the best score, stars and accuracy per song per difficulty. */
+export function recordResult(songId, difficulty, { score, stars, accuracy }) {
+  const all = state.profile.highScores;
+  const prev = all[songId]?.[difficulty] ?? {};
+  const best = {
+    score: Math.max(prev.score ?? 0, score),
+    stars: Math.max(prev.stars ?? 0, stars),
+    accuracy: Math.max(prev.accuracy ?? 0, accuracy),
+  };
+  setProfile("highScores", { ...all, [songId]: { ...all[songId], [difficulty]: best } });
+}

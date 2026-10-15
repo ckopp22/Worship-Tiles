@@ -83,6 +83,23 @@
       <button class="btn btn--small" type="button" data-go="menu">‹ Back</button>
       <h2 class="screen-title">Song Library</h2>
       <ul id="song-list" class="song-list"></ul>
+
+      <!-- Bottom sheet: difficulty, best results, Play -->
+      <div id="song-sheet" class="sheet" hidden>
+        <div id="sheet-backdrop" class="sheet-backdrop"></div>
+        <div class="sheet-panel" role="dialog" aria-labelledby="sheet-title">
+          <h3 id="sheet-title" class="sheet-title"></h3>
+          <p id="sheet-credit" class="sheet-credit"></p>
+          <div id="sheet-difficulty" class="segmented" role="group" aria-label="Difficulty"></div>
+          <dl class="sheet-stats">
+            <div><dt>High score</dt><dd id="sheet-score">—</dd></div>
+            <div><dt>Stars</dt><dd id="sheet-stars">☆☆☆</dd></div>
+            <div><dt>Accuracy</dt><dd id="sheet-accuracy">—</dd></div>
+          </dl>
+          <p id="sheet-reward" class="sheet-reward"></p>
+          <button id="sheet-play" class="btn btn--primary" type="button">Play</button>
+        </div>
+      </div>
     </section>
 
     <section class="screen screen--plain" data-screen="store" aria-label="Song Store">
@@ -116,7 +133,9 @@
     <section class="screen screen--plain" data-screen="results" aria-label="Results">
       <h2 class="screen-title">Song Complete</h2>
       <p id="res-song" class="res-song"></p>
+      <p id="res-stars" class="res-stars" role="img"></p>
       <p class="res-score" id="res-score">0</p>
+      <p id="res-reward" class="res-reward"></p>
       <dl class="res-stats">
         <div><dt>Accuracy</dt><dd id="res-accuracy">0%</dd></div>
         <div><dt>Max combo</dt><dd id="res-combo">0</dd></div>
@@ -124,6 +143,9 @@
         <div><dt>Great</dt><dd id="res-great">0</dd></div>
         <div><dt>Good</dt><dd id="res-good">0</dd></div>
         <div><dt>Miss</dt><dd id="res-miss">0</dd></div>
+        <div><dt>Holds completed</dt><dd id="res-holds">0</dd></div>
+        <div><dt>Double-taps</dt><dd id="res-doubles">0</dd></div>
+        <div><dt>Chords hit</dt><dd id="res-chords">0</dd></div>
       </dl>
       <button id="results-again" class="btn btn--primary" type="button">Play Again</button>
       <button class="btn" type="button" data-go="library">Back to Library</button>

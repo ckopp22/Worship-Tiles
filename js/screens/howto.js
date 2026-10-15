@@ -1,4 +1,4 @@
-// How to Play: swipeable / tap-through cards for the 7 steps (MDD 4.3).
+// How to Play: swipeable / tap-through cards for the 8 steps (MDD 4.3).
 
 import { state, setProfile } from "../state.js";
 
@@ -18,6 +18,8 @@ const CARDS = [
     art: svg(`${lanes}${hitLine}<rect class="art-tile" x="${L[2] - 20}" y="40" width="40" height="150" rx="10"/><rect x="${L[2] - 5}" y="48" width="10" height="134" rx="5" fill="#f2c460"/><circle class="tap-ring" cx="${L[2]}" cy="190" r="26" fill="none" stroke="#fff6d8" stroke-width="3"/>`) },
   { title: "Double-tap", body: "Tiles marked “2” need two quick taps.",
     art: svg(`${lanes}${hitLine}${tile(L[3], 140)}${text(L[3], 164, "2", 24, "#3a2a08")}<circle class="tap-ring" cx="${L[3]}" cy="190" r="26" fill="none" stroke="#fff6d8" stroke-width="3"/>`) },
+  { title: "Play chords", body: "Two joined tiles need two fingers at once. If they're tall, hold both.",
+    art: svg(`${lanes}${hitLine}<path d="M${L[0]} 150H${L[2]}" stroke="#f2c460" stroke-width="6" stroke-linecap="round"/>${tile(L[0], 133)}${tile(L[2], 133)}<circle class="tap-ring" cx="${L[0]}" cy="190" r="26" fill="none" stroke="#fff6d8" stroke-width="3"/><circle class="tap-ring" cx="${L[2]}" cy="190" r="26" fill="none" stroke="#fff6d8" stroke-width="3"/>`) },
   { title: "Time it well", body: "Perfect, Great, Good, or Miss. Better timing means more points.",
     art: svg(`${text(128, 70, "Perfect", 30, "#ffe2a0")}${text(128, 115, "Great", 26)}${text(128, 155, "Good", 22, "rgba(251,243,220,.8)")}${text(128, 190, "Miss", 18, "rgba(251,243,220,.5)")}`) },
   { title: "Pick your challenge", body: "Easy, Normal, or Hard for each song. Harder modes earn more coins.",

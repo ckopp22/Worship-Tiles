@@ -1,11 +1,12 @@
 // Song loader: the only place the game gets songs from.
-// loadSong(id) resolves to { id, title, credit, bpm, buffer, chart }. Real mp3 + chart JSON entries
-// in songs/songs.json (MDD 6.3) load through the same function, so game code never changes.
+// loadSong(id, difficulty) resolves to { id, title, credit, bpm, buffer, chart }. Real mp3 + chart JSON
+// entries in songs/songs.json (MDD 6.3: one chart file per difficulty) load through the same function,
+// so game code never changes.
 
 import { getContext } from "./audio.js";
 import { TEST_SONG_META, buildTestSong } from "./testsong.js";
 
-const cache = new Map();
+const audioCache = new Map(); // id -> { meta, buffer, charts? }
 
 async function fetchCatalog() {
   try {
@@ -22,24 +23,24 @@ export async function listSongs() {
   return [TEST_SONG_META, ...catalog.map(({ id, title, credit, bpm }) => ({ id, title, credit, bpm }))];
 }
 
-export async function loadSong(id, difficulty = "easy") {
-  const key = `${id}:${difficulty}`;
-  if (cache.has(key)) return cache.get(key);
-
-  let song;
+async function loadAudio(id) {
+  if (audioCache.has(id)) return audioCache.get(id);
+  let entry;
   if (id === TEST_SONG_META.id) {
-    song = { ...TEST_SONG_META, ...(await buildTestSong()) };
+    entry = { meta: TEST_SONG_META, ...(await buildTestSong()) }; // { buffer, charts }
   } else {
-    const entry = (await fetchCatalog()).find((s) => s.id === id);
-    if (!entry) throw new Error(`Unknown song: ${id}`);
-    const [audioData, chart] = await Promise.all([
-      fetch(entry.audio).then((r) => r.arrayBuffer()),
-      fetch(entry.charts[difficulty]).then((r) => r.json()),
-    ]);
+    const song = (await fetchCatalog()).find((s) => s.id === id);
+    if (!song) throw new Error(`Unknown song: ${id}`);
+    const data = await fetch(song.audio).then((r) => r.arrayBuffer());
     const ctx = getContext() ?? new OfflineAudioContext(2, 1, 44100); // decode works on either
-    const buffer = await ctx.decodeAudioData(audioData);
-    song = { id: entry.id, title: entry.title, credit: entry.credit, bpm: entry.bpm, buffer, chart };
+    entry = { meta: song, buffer: await ctx.decodeAudioData(data), song };
   }
-  cache.set(key, song);
-  return song;
+  audioCache.set(id, entry);
+  return entry;
+}
+
+export async function loadSong(id, difficulty = "easy") {
+  const { meta, buffer, charts, song } = await loadAudio(id);
+  const chart = charts ? charts[difficulty] : await fetch(song.charts[difficulty]).then((r) => r.json());
+  return { id: meta.id, title: meta.title, credit: meta.credit, bpm: meta.bpm, buffer, chart };
 }

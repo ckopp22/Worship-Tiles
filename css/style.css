@@ -327,3 +327,29 @@ button { font: inherit; color: inherit; touch-action: manipulation; }
 .res-stats dt { font-size: .8em; opacity: .7; }
 .res-stats dd { margin: 0; font-size: 1.4em; font-weight: 700; font-variant-numeric: tabular-nums; }
 .screen--plain > .btn:not(.btn--small) { max-width: 20em; }
+
+/* ---------- Library rows + bottom sheet (Phase 3b) ---------- */
+.song-row { width: 100%; text-align: left; align-items: flex-start; flex-direction: column; justify-content: center; color: inherit; cursor: pointer; font: inherit; }
+.song-row strong { font-size: 1.1em; }
+.sheet { position: absolute; inset: 0; z-index: 10; display: flex; align-items: flex-end; }
+.sheet[hidden] { display: none; }
+.sheet-backdrop { position: absolute; inset: 0; background: rgba(5, 11, 31, .6); }
+.sheet-panel {
+  position: relative; width: 100%; display: flex; flex-direction: column; gap: .8em;
+  padding: 1.25em 1.25em calc(env(safe-area-inset-bottom, 0px) + 1.25em);
+  border-radius: 1.25em 1.25em 0 0; background: linear-gradient(180deg, #14265a, var(--navy-800));
+  border-top: 1px solid rgba(242, 196, 96, .5);
+}
+.sheet-title { margin: 0; font-family: var(--font-serif); font-size: 1.6em; color: var(--gold); }
+.sheet-credit, .sheet-reward { margin: 0; font-size: .9em; opacity: .75; }
+.segmented { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5em; }
+.seg { min-height: 2.75em; border-radius: .8em; border: 1px solid rgba(242, 196, 96, .5); background: rgba(5, 11, 31, .5); font-weight: 600; cursor: pointer; }
+.seg[aria-pressed="true"] { background: linear-gradient(180deg, #ffe2a0, var(--gold-deep)); color: #2a1c05; }
+.sheet-stats { margin: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: .5em; text-align: center; }
+.sheet-stats dt { font-size: .75em; opacity: .7; }
+.sheet-stats dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+.res-stars { margin: 0; font-size: 1.8em; letter-spacing: .15em; color: var(--gold); }
+.res-reward { margin: 0; font-size: .9em; opacity: .8; }
+.res-stats { grid-template-columns: 1fr 1fr 1fr; }
+.res-stats dd { font-size: 1.2em; }
+.res-stats dt { font-size: .7em; }
