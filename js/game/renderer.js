@@ -271,11 +271,28 @@ export function draw(t, bigNumber, bigFrac) {
   g.drawImage(bgCanvas, 0, 0, W, H);
   if (!reduceMotion.matches) drawMotes(t);
   drawFlashes(t);
+  if (beatLen) drawBeatLines(t);
   drawNotes(t);
   drawEffects(t);
   drawDanger(t);
   drawHud(t);
   if (bigNumber) drawBigNumber(bigNumber, bigFrac);
+}
+
+let beatLen = 0, beatOrigin = 0;
+/** Debug (?debug=1): draw a thin line at every beat, scrolling with the notes. */
+export function setBeatGrid(secondsPerBeat, offset) { beatLen = secondsPerBeat; beatOrigin = offset; }
+
+function drawBeatLines(t) {
+  const first = Math.ceil((t - offscreenTime - beatOrigin) / beatLen), last = Math.floor((t + hitY / speed - beatOrigin) / beatLen);
+  g.strokeStyle = "#7fe3ff"; g.lineWidth = 1; g.globalAlpha = 0.6;
+  g.beginPath();
+  for (let n = first; n <= last; n++) {
+    const y = hitY - (beatOrigin + n * beatLen - t) * speed;
+    g.moveTo(0, y); g.lineTo(W, y);
+  }
+  g.stroke();
+  g.globalAlpha = 1;
 }
 
 function drawMotes(t) {

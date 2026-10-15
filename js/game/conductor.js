@@ -2,10 +2,12 @@
 // AudioContext hardware clock (never frame deltas or Date.now()), so visuals can't drift from the music.
 // Suspending the context (pause) freezes this clock automatically.
 
-import { getContext, getMusicGain, unlock } from "../audio.js";
+import { getContext, getMusicGain, unlock, scheduleClick } from "../audio.js";
 import { state } from "../state.js";
 
 export const COUNT_IN_BEATS = 3;
+/** ?debug=1: metronome click on every beat (audio clock) plus beat lines on screen, to check notes against the beat. */
+export const DEBUG = new URLSearchParams(location.search).get("debug") === "1";
 
 let ctx = null;
 let source = null;
@@ -15,7 +17,7 @@ let secPerBeat = 1;
 let songDuration = 0;
 
 /** Schedule the song to begin after a visual count-in. */
-export async function start(buffer, bpm) {
+export async function start(buffer, bpm, beatOffset = 0) {
   stop();
   unlock();
   ctx = getContext();
@@ -31,6 +33,9 @@ export async function start(buffer, bpm) {
   source.connect(songGain).connect(getMusicGain()); // music gain: slider + Sound toggle control it; the clock keeps running when muted
   audioStart = ctx.currentTime + COUNT_IN_BEATS * secPerBeat;
   source.start(audioStart);
+  if (DEBUG) { // beat n is at song time beatOffset + n * secPerBeat; clicks run on the same audio clock as the song
+    for (let n = -COUNT_IN_BEATS; beatOffset + n * secPerBeat < songDuration; n++) scheduleClick(audioStart + beatOffset + n * secPerBeat);
+  }
 }
 
 const QUIET = 0.12;

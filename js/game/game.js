@@ -92,7 +92,8 @@ async function startRun(my) {
   prevCombo = 0;
   loadingEl.hidden = false;
   try {
-    await conductor.start(song.buffer, song.bpm);
+    if (conductor.DEBUG) view.setBeatGrid(60 / song.bpm, song.beatOffset);
+    await conductor.start(song.buffer, song.bpm, song.beatOffset);
   } catch (err) {
     console.error(err);
     if (my === token) app.go("library");

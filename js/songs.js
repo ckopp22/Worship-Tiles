@@ -56,7 +56,7 @@ async function loadReal(entry, difficulty) {
   const pick = (c) => c[difficulty] ?? (difficulty === "expert" ? c.hard : undefined); // Expert reuses the Hard chart
   const chart = charts ? pick(charts) : await (await fetchOk(pick(entry.charts))).json();
   if (!chart?.notes) throw new Error(`Bad chart for ${entry.id} (${difficulty})`);
-  return { id: entry.id, title: entry.title, credit: entry.credit, bpm: entry.bpm, buffer, chart };
+  return { id: entry.id, title: entry.title, credit: entry.credit, bpm: entry.bpm, beatOffset: entry.beatOffset ?? 0, buffer, chart };
 }
 
 /** Load a song for a difficulty. If its audio or chart can't be loaded, play the built-in test track instead. */

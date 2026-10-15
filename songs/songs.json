@@ -7,6 +7,7 @@
       "title": "Amazing Grace",
       "credit": "Words: John Newton (1779)",
       "bpm": 90,
+      "beatOffset": 0.04,
       "price": 0,
       "audio": "songs/audio/amazing-grace.mp3",
       "charts": {

@@ -21,21 +21,31 @@ const EXPERT_SPLIT_GAP = 0.55;  // Expert: melody gaps at least this long get an
 const EXPERT_MIN_GAP = 0.2;     // Expert: harmony taps are only added at least this far (seconds) from every other note
 const NORMAL_DOUBLE_EVERY = 3;  // Normal: every Nth eligible eighth pair becomes a doubleTap, the rest drop the off-beat note
 // Seconds to add to MIDI times to get MP3 times, for MIDI-derived songs only. Amazing Grace's notes.json says
-// leadInSeconds = 0.5, but the MP3 has NO 0.5 s lead-in: the first sound lands ~0.04 s after the first MIDI note
-// (1.33 s). Audio-derived songs are measured on the shipped audio and set audioOffsetSeconds = 0 instead.
-const DEFAULT_AUDIO_OFFSET = 0.04;
+// leadInSeconds = 0.5, but the MP3 has NO 0.5 s lead-in: tools/check_sync.mjs measures the first sound ~0.04 s after
+// the first MIDI note (1.33 s), steady across the song (spread ~3 ms, no drift). Audio-derived songs are measured on
+// the shipped audio and set audioOffsetSeconds = 0 instead. This one constant is applied to every note.
+const AUDIO_OFFSET_SECONDS = 0.04;
+const RELEASE_GAP = 0.1;        // a hold must end at least this long before the next note in any of its lanes
 
 const round3 = (x) => Math.round(x * 1000) / 1000;
 const near = (a, b, tol = 0.05) => Math.abs(a - b) < tol;
 
 // ---- load ----
 const data = JSON.parse(fs.readFileSync(path.join(ROOT, `tools/data/${SONG_ID}.notes.json`), "utf8"));
-const lead = data.audioOffsetSeconds ?? DEFAULT_AUDIO_OFFSET;
+const lead = data.audioOffsetSeconds ?? AUDIO_OFFSET_SECONDS;
 if (data.leadInSeconds !== undefined && data.leadInSeconds !== lead && data.audioOffsetSeconds === undefined) {
   console.warn(`Note: notes.json leadInSeconds is ${data.leadInSeconds}; using measured audio offset ${lead} instead.`);
 }
 const BPM = data.bpm ?? 90;
 const BEAT = 60 / BPM;
+// MIDI-derived songs sit exactly on the beat grid: every start / end is snapped to a beat subdivision.
+// Audio-derived songs (source "audio-onsets") keep their measured times.
+const MIDI_GRID = data.source !== "audio-onsets";
+let SUB = 2; // subdivisions per beat for the difficulty being built (2 = half beat, 4 = quarter beat)
+/** Snap a chart time (seconds of the shipped audio) to the nearest 1/sub beat, converted back to seconds. */
+const snap = (t, sub = SUB) => (MIDI_GRID ? round3(lead + (Math.round(((t - lead) / BEAT) * sub) / sub) * BEAT) : t);
+/** Hold length: start and end both snapped (end to a beat or half beat); audio-derived songs keep the old trim. */
+const holdLen = (n) => (MIDI_GRID ? round3(snap(n.time + n.len, 2) - snap(n.time)) : round3(n.len - HOLD_TRIM));
 const BEATS_PER_BAR = data.beatsPerBar ?? 3;
 const BAR = BEAT * BEATS_PER_BAR;
 const PHRASE = BAR * 4;                   // phrases are 4 bars; used for phrase endings when phraseGrid is on
@@ -114,12 +124,12 @@ function adjacentLane(n) {
 }
 
 // ---- note builders ----
-const tap = (n, lane = n.lane) => ({ time: n.time, lane, type: "tap" });
-const hold = (n, lane = n.lane) => ({ time: n.time, lane, type: "hold", duration: round3(n.len - HOLD_TRIM) });
-const double = (n) => ({ time: n.time, lane: n.lane, type: "doubleTap" });
+const tap = (n, lane = n.lane) => ({ time: snap(n.time), lane, type: "tap" });
+const hold = (n, lane = n.lane) => ({ time: snap(n.time), lane, type: "hold", duration: holdLen(n) });
+const double = (n) => ({ time: snap(n.time), lane: n.lane, type: "doubleTap" });
 const chord = (n, second, withHold) => {
-  const note = { time: n.time, lanes: [n.lane, second], type: "chord" };
-  if (withHold) note.duration = round3(n.len - HOLD_TRIM);
+  const note = { time: snap(n.time), lanes: [n.lane, second], type: "chord" };
+  if (withHold) note.duration = holdLen(n);
   return note;
 };
 
@@ -152,7 +162,7 @@ function buildExpert() {
   const extras = [];
   harmonyTracks.forEach((track, k) => {
     for (const h of track.notes) {
-      const time = round3(h.start + lead), lane = laneFor(h.pitch, harmonyRanges[k]);
+      const time = snap(round3(h.start + lead)), lane = laneFor(h.pitch, harmonyRanges[k]);
       if (starts.some((s) => Math.abs(s - time) < EXPERT_MIN_GAP)) continue;
       if (holds.some((o) => o.lanes.includes(lane) && time > o.s - 0.1 && time < o.e + 0.1)) continue;
       starts.push(time);
@@ -166,7 +176,7 @@ function buildExpert() {
     if (!next || isLong(n)) return;
     const gap = next.time - n.time;
     if (gap < EXPERT_SPLIT_GAP) return;
-    const time = round3(n.time + gap / 2);
+    const time = snap(round3(n.time + gap / 2));
     const lane = Math.max(0, Math.min(3, n.lane + (flip++ % 2 ? 1 : -1) * (n.lane === 0 ? -1 : 1)));
     if (lane === n.lane || lane === next.lane) return;
     if (starts.some((s) => Math.abs(s - time) < EXPERT_MIN_GAP)) return;
@@ -253,12 +263,46 @@ function buildEasy() {
   return out;
 }
 
+/** Keep the snapped chart playable: holds release before the next note in their lanes; same-lane collisions are dropped. */
+function finalize(notes) {
+  if (!MIDI_GRID) return notes;
+  notes.sort((a, b) => a.time - b.time);
+  const lanesOf = (n) => n.lanes ?? [n.lane];
+  const log = [];
+  for (const h of notes) {
+    if (!h.duration) continue;
+    let end = h.time + h.duration;
+    for (const o of notes) {
+      if (o === h || o.time <= h.time || !lanesOf(o).some((l) => lanesOf(h).includes(l))) continue;
+      if (o.time < end + RELEASE_GAP - 1e-6) end = Math.min(end, o.time - RELEASE_GAP);
+    }
+    if (end < h.time + h.duration - 1e-6) {
+      const half = BEAT / 2; // shorten onto the half-beat grid
+      const snapped = round3(lead + Math.floor(((end - lead) / BEAT) * 2 + 1e-6) * half);
+      const dur = round3(snapped - h.time);
+      log.push(`hold at ${h.time} shortened ${h.duration} -> ${dur}`);
+      h.duration = dur;
+      if (dur < half - 1e-6) log.push(`  WARNING: hold at ${h.time} is now shorter than a half beat`);
+    }
+  }
+  const out = [];
+  for (const n of notes) {
+    const clash = out.find((o) => lanesOf(o).some((l) => lanesOf(n).includes(l)) && Math.abs(o.time - n.time) < 0.25 + 1e-6 && (o.time === n.time));
+    if (clash) { log.push(`dropped ${JSON.stringify(n)} (same time and lane as ${JSON.stringify(clash)})`); continue; }
+    out.push(n);
+  }
+  log.forEach((l) => console.log("    " + l));
+  return out;
+}
+
 // ---- write ----
+const SUBDIVISIONS = { easy: 2, normal: 2, hard: 4, expert: 4 };
 const builders = { easy: buildEasy, normal: buildNormal, hard: buildHard, expert: buildExpert };
 fs.mkdirSync(path.join(ROOT, "songs/charts"), { recursive: true });
 console.log(`${SONG_ID}: ${melody.length} source notes, pitch range ${melodyRange.lo}-${melodyRange.hi}, ${BPM} bpm, ${BEATS_PER_BAR}/4`);
 for (const [difficulty, build] of Object.entries(builders)) {
-  const notes = build().sort((a, b) => a.time - b.time);
+  SUB = SUBDIVISIONS[difficulty];
+  const notes = finalize(build()).sort((a, b) => a.time - b.time);
   const body = notes.map((n) => "    " + JSON.stringify(n)).join(",\n"); // one note per line
   const text = `{\n  "songId": "${SONG_ID}",\n  "difficulty": "${difficulty}",\n  "notes": [\n${body}\n  ]\n}\n`;
   fs.writeFileSync(path.join(ROOT, `songs/charts/${SONG_ID}-${difficulty}.json`), text);
