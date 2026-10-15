@@ -9,6 +9,7 @@ export const COUNT_IN_BEATS = 3;
 
 let ctx = null;
 let source = null;
+let songGain = null; // ducks the song when the player stops hitting notes
 let audioStart = 0; // context time at which song time 0 (audio start) occurs
 let secPerBeat = 1;
 let songDuration = 0;
@@ -25,9 +26,26 @@ export async function start(buffer, bpm) {
   songDuration = buffer.duration;
   source = ctx.createBufferSource();
   source.buffer = buffer;
-  source.connect(getMusicGain()); // music gain: slider + Sound toggle control it; the clock keeps running when muted
+  songGain = ctx.createGain();
+  songGain.gain.value = 1;
+  source.connect(songGain).connect(getMusicGain()); // music gain: slider + Sound toggle control it; the clock keeps running when muted
   audioStart = ctx.currentTime + COUNT_IN_BEATS * secPerBeat;
   source.start(audioStart);
+}
+
+const QUIET = 0.12;
+
+/** Last note was hit: full volume (and it stays there through gaps in the notes). */
+export function boost() { fadeTo(1, 0.04); }
+
+/** Last note was missed: fade the song down until the next hit. */
+export function duck() { fadeTo(QUIET, 0.25); }
+
+function fadeTo(level, tc) {
+  if (!songGain || !ctx) return;
+  const t = ctx.currentTime, g = songGain.gain;
+  g.cancelScheduledValues(t);
+  g.setTargetAtTime(level, t, tc);
 }
 
 /**
@@ -61,5 +79,6 @@ export function stop() {
     source.disconnect();
     source = null;
   }
+  if (songGain) { songGain.disconnect(); songGain = null; }
   if (ctx && ctx.state === "suspended") ctx.resume().catch(() => {});
 }

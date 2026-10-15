@@ -3,9 +3,13 @@
 // Timing comes from conductor.js, hit decisions from judge.js, drawing from renderer.js.
 
 import { state, recordResult, addToBank } from "../state.js";
-import { playHit, playMiss } from "../audio.js";
+import { playHit as sfxHit, playMiss as sfxMiss } from "../audio.js";
 import { loadSong } from "../songs.js";
 import * as conductor from "./conductor.js";
+
+/** Hit chime + song at full volume; a miss ducks the song until the next hit. */
+const playHit = (grade) => { sfxHit(grade); conductor.boost(); };
+const playMiss = () => { sfxMiss(); conductor.duck(); };
 import { createField } from "./notes.js";
 import { Judge, maxScore } from "./judge.js";
 import { DifficultyConfig, starsFor, bankReward } from "./difficulty.js";
@@ -82,7 +86,7 @@ async function startRun(my) {
   input.detach();
   field = createField(song.chart);
   judge = new Judge(field, difficulty, onEvent);
-  view.setScrollSpeed(DifficultyConfig[difficulty].scrollSpeed);
+  view.setScrollSpeed(DifficultyConfig[difficulty].scrollSpeed, DifficultyConfig[difficulty].tileScale);
   view.setSongDuration(song.buffer.duration);
   view.bindRun(field, judge);
   prevCombo = 0;

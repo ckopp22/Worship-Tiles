@@ -27,7 +27,7 @@ const MAX_GLOWS = 6, GLOW_LIFE = 0.4, BANNER_LIFE = 1.2, MISS_FADE = 0.8, MOTE_C
 let canvas, g, probe;
 let W = 0, H = 0, dpr = 1, safeTop = 0, safeBottom = 0;
 let laneW = 0, hitY = 0, speed = 0, tileW = 0, tileH = 0, offscreenTime = 0;
-let scrollScreens = 0.55;
+let scrollScreens = 0.55, tileScale = 1;
 let bgCanvas = null, flashCanvas = null, flashH = 0;
 const tileSprites = [], doubleSprites = [];
 const spritePad = 12;
@@ -74,7 +74,7 @@ export function resize() {
   laneW = W / LANE_COUNT;
   hitY = H - safeBottom - H * HIT_LINE_FROM_BOTTOM;
   tileW = laneW - 16;
-  tileH = Math.max(34, laneW * 0.42);
+  tileH = Math.max(34, laneW * 0.42) * tileScale;
   applySpeed();
   buildBackground();
   buildSprites();
@@ -82,8 +82,11 @@ export function resize() {
 }
 
 /** Scroll speed in screen heights per second (from DifficultyConfig). */
-export function setScrollSpeed(screensPerSecond) {
+export function setScrollSpeed(screensPerSecond, scale = 1) {
   scrollScreens = screensPerSecond;
+  const rescale = scale !== tileScale;
+  tileScale = scale;
+  if (H && rescale) { tileH = Math.max(34, laneW * 0.42) * tileScale; buildSprites(); }
   if (H) applySpeed();
 }
 

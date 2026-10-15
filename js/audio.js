@@ -129,7 +129,7 @@ const CHIME_HZ = { perfect: 1568, great: 1319, good: 1047 }; // G6 / E6 / C6, in
 
 /** Soft chime on a hit. */
 export function playHit(grade) {
-  blip("sine", CHIME_HZ[grade] ?? 1047, CHIME_HZ[grade] ?? 1047, 0.3, 0.1);
+  blip("sine", CHIME_HZ[grade] ?? 1047, CHIME_HZ[grade] ?? 1047, 0.3, 0.035);
 }
 
 /** Subtle low tone on a miss. */
