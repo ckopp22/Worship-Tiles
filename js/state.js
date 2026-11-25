@@ -2,6 +2,7 @@
 
 const STORAGE_KEY = "worshipTiles.save.v1";
 const VERSION = 1;
+const SCORING = 2; // 1 point per tile
 
 const DEFAULTS = {
   settings: { soundEnabled: true, hapticsEnabled: true, latencyOffsetMs: 0, musicVolume: 0.8, sfxVolume: 0.7 },
@@ -42,6 +43,11 @@ function sanitize(raw) {
   s.sfxVolume = Math.max(0, Math.min(1, s.sfxVolume));
   p.bank = Math.max(0, Math.floor(p.bank));
   p.ownedSongIds = p.ownedSongIds.filter((id) => typeof id === "string");
+  for (const song of Object.values(p.highScores)) {
+    for (const best of Object.values(song ?? {})) {
+      if (best && best.scoring !== SCORING) Object.assign(best, { score: 0, accuracy: 0, scoring: SCORING }); // old point scale; stars are kept
+    }
+  }
   return out;
 }
 
@@ -98,6 +104,7 @@ export function recordResult(songId, difficulty, { score, stars, accuracy }) {
     score: Math.max(prev.score ?? 0, score),
     stars: Math.max(prev.stars ?? 0, stars),
     accuracy: Math.max(prev.accuracy ?? 0, accuracy),
+    scoring: SCORING,
   };
   setProfile("highScores", { ...all, [songId]: { ...all[songId], [difficulty]: best } });
   return score > (prev.score ?? 0);

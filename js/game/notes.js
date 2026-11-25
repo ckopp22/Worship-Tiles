@@ -40,7 +40,7 @@ export function createField(chart) {
     if (raw.type === "chord") {
       const [a, b] = raw.lanes ?? [];
       if (!isLane(a) || !isLane(b) || a === b) continue;
-      const group = { tiles: [], heads: 0, anyMiss: false, mult: 0, holdsDone: 0, bonusGiven: false };
+      const group = { tiles: [], hits: 0 };
       const kind = hold ? Kind.HOLD : Kind.TAP;
       group.tiles.push(makeTile(raw, a, kind, group), makeTile(raw, b, kind, group));
       notes.push(...group.tiles);

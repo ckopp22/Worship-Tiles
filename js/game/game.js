@@ -85,7 +85,7 @@ async function startRun(my) {
   cancelAnimationFrame(raf);
   input.detach();
   field = createField(song.chart);
-  judge = new Judge(field, difficulty, onEvent);
+  judge = new Judge(field, difficulty, view.visibleWindow, onEvent);
   view.setScrollSpeed(DifficultyConfig[difficulty].scrollSpeed, DifficultyConfig[difficulty].tileScale);
   view.setSongDuration(song.buffer.duration);
   view.bindRun(field, judge);
@@ -126,7 +126,6 @@ function fail() {
     maxCombo: judge.maxCombo,
     counts: { ...judge.counts },
     holds: judge.holdsCompleted,
-    doubles: 0,
     chords: judge.chordsHit,
     stars: 0,
     reward: 0,
@@ -155,7 +154,6 @@ function finish() {
     maxCombo: judge.maxCombo,
     counts: { ...judge.counts },
     holds: judge.holdsCompleted,
-    doubles: judge.doublesLanded,
     chords: judge.chordsHit,
     stars,
     reward,
@@ -207,30 +205,20 @@ function onLaneUp(lane) {
   judge.release(lane, conductor.songTime());
 }
 
-/** Judge callback: sound and visuals for every hit, bonus and break. */
+/** Judge callback: sound and visuals for every hit, miss and break. */
 function onEvent(type, note, key) {
   const t = conductor.songTime();
-  const mid = note.group ? (view.laneX(note.group.tiles[0].lane) + view.laneX(note.group.tiles[1].lane)) / 2 : view.laneX(note.lane);
   switch (type) {
-    case "grade":
-      view.spawnLabel(key, view.laneX(note.lane), t, 0);
-      if (key === "miss") playMiss();
-      else {
-        playHit(key);
-        hitPulse();
-        if (key === "good") view.spawnGlow(view.laneX(note.lane), t);
-        else view.spawnBurst(view.laneX(note.lane), t);
-      }
-      break;
-    case "tick":
-      view.spawnLabel("tick", view.laneX(note.lane), t, 0);
-      playHit(key);
+    case "hit":
+      playHit("perfect");
       hitPulse();
       break;
+    case "miss":
+      view.spawnLabel("miss", view.laneX(note.lane), t, 0);
+      playMiss();
+      break;
     case "bonus":
-      view.spawnLabel(key, key === "holdComplete" ? view.laneX(note.lane) : mid, t, key === "chordHold" ? 2 : 1); // stack above the grade text
-      view.spawnBurst(key === "holdComplete" ? view.laneX(note.lane) : mid, t);
-      if (key === "holdComplete") holdPulse();
+      holdPulse();
       break;
     case "break":
       playMiss();

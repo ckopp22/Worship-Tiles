@@ -1,5 +1,5 @@
 // Canvas rendering for the gameplay screen: layout, pre-rendered sprites, notes (tap / hold / double /
-// chord), floating labels, particles and the HUD. Pools are preallocated so frames create no objects.
+// chord), floating labels and the HUD. Pools are preallocated so frames create no objects.
 
 import { state } from "../state.js";
 import { LANE_COUNT, Kind, NoteState } from "./notes.js";
@@ -10,19 +10,12 @@ const SANS = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
 const TILE_COLORS = ["#f6dc9a", "#f3c9a8", "#b9d2f5", "#bfe3c8"]; // muted stained-glass tints
 
 const LABELS = {
-  perfect: { text: "Perfect", color: "#ffe2a0" },
-  great: { text: "Great", color: "#fbf3dc" },
-  good: { text: "Good", color: "#9fc3ff" },
   miss: { text: "Miss", color: "#e58a8a" },
-  tick: { text: "1/2", color: "#fbf3dc" },
-  double: { text: "Double", color: "#ffd27a" },
-  chord: { text: "Chord", color: "#ffd27a" },
-  holdComplete: { text: "Hold Complete", color: "#ffe2a0" },
-  chordHold: { text: "Chord Hold Complete", color: "#ffd27a" },
 };
-const TEXT_LIFE = 0.7, BURST_LIFE = 0.45, FLASH_LIFE = 0.25;
-const MAX_TEXTS = 10, MAX_PARTICLES = 128, BURST_COUNT = 10;
-const MAX_GLOWS = 6, GLOW_LIFE = 0.4, BANNER_LIFE = 1.2, MISS_FADE = 0.8, MOTE_COUNT = 26;
+const TEXT_LIFE = 0.7, FLASH_LIFE = 0.25;
+const MAX_TEXTS = 10;
+const BANNER_LIFE = 1.2, MOTE_COUNT = 26;
+const TAPPED_ALPHA = 0.22; // a tapped tile stays on its way down, faded
 
 let canvas, g, probe;
 let W = 0, H = 0, dpr = 1, safeTop = 0, safeBottom = 0;
@@ -38,11 +31,8 @@ const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 const laneFlash = new Array(LANE_COUNT).fill(-10);
 const texts = Array.from({ length: MAX_TEXTS }, () => ({ on: false, label: null, x: 0, t0: 0, level: 0 }));
-const particles = Array.from({ length: MAX_PARTICLES }, () => ({ on: false, x: 0, y: 0, vx: 0, vy: 0, t0: 0 }));
-let textNext = 0, particleNext = 0;
+let textNext = 0;
 
-const glows = Array.from({ length: MAX_GLOWS }, () => ({ on: false, x: 0, t0: 0 }));
-let glowNext = 0, glowCanvas = null, glowSize = 0;
 const banner = { on: false, text: "", t0: 0 };
 
 // drifting gold dust: fixed fractions (no randomness), positions computed from song time each frame
@@ -103,8 +93,6 @@ export function bindRun(fieldRef, judgeRef) {
   scoreStr = "0"; scoreVal = 0; comboStr = ""; comboVal = 0;
   laneFlash.fill(-10);
   texts.forEach((x) => (x.on = false));
-  particles.forEach((p) => (p.on = false));
-  glows.forEach((x) => (x.on = false));
   banner.on = false;
   redFlashT = -10;
 }
@@ -149,18 +137,6 @@ function buildBackground() {
   for (let i = 1; i < LANE_COUNT; i++) {
     x.beginPath(); x.moveTo(i * laneW, 0); x.lineTo(i * laneW, H); x.stroke();
   }
-  x.shadowColor = "#f2c460";
-  x.shadowBlur = 14;
-  x.strokeStyle = "#f2c460";
-  x.lineWidth = 3;
-  x.beginPath(); x.moveTo(0, hitY); x.lineTo(W, hitY); x.stroke();
-  x.shadowBlur = 0;
-  x.strokeStyle = "rgba(242,196,96,.35)";
-  x.lineWidth = 2;
-  for (let i = 0; i < LANE_COUNT; i++) {
-    x.beginPath(); x.arc((i + 0.5) * laneW, hitY, laneW * 0.3, 0, Math.PI * 2); x.stroke();
-  }
-
   flashH = H * 0.35;
   let fx;
   [flashCanvas, fx] = makeLayer(laneW, flashH);
@@ -170,15 +146,6 @@ function buildBackground() {
   fx.fillStyle = fg;
   fx.fillRect(0, 0, laneW, flashH);
 
-  // soft round glow for Good hits
-  glowSize = laneW * 1.3;
-  let gx;
-  [glowCanvas, gx] = makeLayer(glowSize, glowSize);
-  const rg = gx.createRadialGradient(glowSize / 2, glowSize / 2, 0, glowSize / 2, glowSize / 2, glowSize / 2);
-  rg.addColorStop(0, "rgba(159,195,255,.55)");
-  rg.addColorStop(1, "rgba(159,195,255,0)");
-  gx.fillStyle = rg;
-  gx.fillRect(0, 0, glowSize, glowSize);
 }
 
 /** One glowing rounded tile per lane, plus a "2" variant for double-taps. */
@@ -239,28 +206,13 @@ export function spawnLabel(key, x, t, level) {
   slot.on = true; slot.label = LABELS[key]; slot.x = x; slot.t0 = t; slot.level = level;
 }
 
-export function spawnBurst(x, t) {
-  if (reduceMotion.matches) return;
-  for (let i = 0; i < BURST_COUNT; i++) {
-    const p = particles[particleNext++ % MAX_PARTICLES];
-    const a = -Math.PI * (0.1 + 0.8 * Math.random());
-    const v = 90 + Math.random() * 130;
-    p.on = true; p.x = x; p.y = hitY; p.vx = Math.cos(a) * v; p.vy = Math.sin(a) * v; p.t0 = t;
-  }
-}
-
-/** Gentle glow on the hit line (Good hits). */
-export function spawnGlow(x, t) {
-  const slot = glows[glowNext++ % MAX_GLOWS];
-  slot.on = true; slot.x = x; slot.t0 = t;
-}
-
 /** Brief banner such as "10 combo!". */
 export function showBanner(text, t) {
   banner.on = true; banner.text = text; banner.t0 = t;
 }
 
-export const activeParticleCount = () => particles.reduce((n, p) => n + (p.on ? 1 : 0), 0);
+/** Seconds before and after its note time that a tile is on screen. */
+export const visibleWindow = () => ({ early: (hitY + tileH / 2) / speed, late: (H - hitY + tileH / 2) / speed });
 
 export const laneX = (lane) => (lane + 0.5) * laneW;
 
@@ -313,16 +265,12 @@ function drawFlashes(t) {
     const age = t - laneFlash[i];
     if (age < 0 || age > FLASH_LIFE) continue;
     g.globalAlpha = 1 - age / FLASH_LIFE;
-    g.drawImage(flashCanvas, i * laneW, hitY - flashH + 4, laneW, flashH);
+    g.drawImage(flashCanvas, i * laneW, H - flashH, laneW, flashH);
   }
   g.globalAlpha = 1;
 }
 
-/** A missed tile quietly fades out instead of lingering. */
-const missFade = (n, t) => Math.max(0, 1 - (t - n.hitT) / MISS_FADE);
-
-/** Y of a tile's head: held holds stay pinned to the hit line while their body shrinks. */
-const headY = (n, t) => (n.state === NoteState.HELD ? hitY : hitY - (n.time - t) * speed);
+const headY = (n, t) => hitY - (n.time - t) * speed;
 
 function drawNotes(t) {
   const notes = field.notes;
@@ -356,7 +304,7 @@ function drawNotes(t) {
       const held = n.state === NoteState.HELD;
       const missed = n.state === NoteState.MISSED;
       const dim = missed || n.state === NoteState.BROKEN;
-      const a = missed ? 0.3 * missFade(n, t) : dim ? 0.25 : 1;
+      const a = dim ? 0.25 : 1;
       const cx = laneX(n.lane), bw = tileW * 0.6;
       g.fillStyle = TILE_COLORS[n.lane];
       g.globalAlpha = a * (held ? 0.22 + 0.2 * pulse : 0.18);       // soft glow
@@ -368,7 +316,7 @@ function drawNotes(t) {
       g.beginPath(); g.arc(cx, tailY + 3, bw * 0.3, 0, Math.PI * 2); g.fill();
       if (held) { // lane glow while the hold is down
         g.globalAlpha = 0.35 + 0.35 * pulse;
-        g.drawImage(flashCanvas, n.lane * laneW, hitY - flashH + 4, laneW, flashH);
+        g.drawImage(flashCanvas, n.lane * laneW, H - flashH, laneW, flashH);
       }
     }
   }
@@ -378,12 +326,10 @@ function drawNotes(t) {
   for (let i = firstVisible; i < notes.length; i++) {
     const n = notes[i];
     if ((n.time - t) * speed > hitY + tileH) break;
-    if (n.state === NoteState.HIT) continue;
     const held = n.state === NoteState.HELD;
-    g.globalAlpha = n.state === NoteState.MISSED ? 0.4 * missFade(n, t)
-      : n.state === NoteState.BROKEN ? 0.3
-      : held ? 0.85 + 0.15 * pulse : 1;
-    if (g.globalAlpha <= 0) continue;
+    g.globalAlpha = n.state === NoteState.HIT || n.state === NoteState.BROKEN ? TAPPED_ALPHA
+      : n.state === NoteState.MISSED ? 0.4
+      : held ? 0.55 + 0.15 * pulse : 1;
     const sprite = (n.kind === Kind.DOUBLE ? doubleSprites : tileSprites)[n.lane];
     g.drawImage(sprite, n.lane * laneW + (laneW - sw) / 2, headY(n, t) - sh / 2, sw, sh);
   }
@@ -391,27 +337,6 @@ function drawNotes(t) {
 }
 
 function drawEffects(t) {
-  g.fillStyle = "#ffe2a0";
-  for (let i = 0; i < MAX_PARTICLES; i++) {
-    const p = particles[i];
-    if (!p.on) continue;
-    const age = t - p.t0;
-    if (age > BURST_LIFE) { p.on = false; continue; }
-    if (age < 0) continue;
-    g.globalAlpha = 1 - age / BURST_LIFE;
-    g.beginPath();
-    g.arc(p.x + p.vx * age, p.y + p.vy * age + 260 * age * age, 3, 0, Math.PI * 2);
-    g.fill();
-  }
-  for (let i = 0; i < MAX_GLOWS; i++) {
-    const x = glows[i];
-    if (!x.on) continue;
-    const age = t - x.t0;
-    if (age > GLOW_LIFE) { x.on = false; continue; }
-    if (age < 0) continue;
-    g.globalAlpha = 1 - age / GLOW_LIFE;
-    g.drawImage(glowCanvas, x.x - glowSize / 2, hitY - glowSize / 2, glowSize, glowSize);
-  }
   g.textAlign = "center";
   g.font = `700 19px ${SERIF}`;
   for (let i = 0; i < MAX_TEXTS; i++) {

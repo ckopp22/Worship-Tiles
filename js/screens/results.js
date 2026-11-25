@@ -1,5 +1,5 @@
 // Results: difficulty, stars (revealed one at a time), score and coin count-up, accuracy, combo, judgments,
-// hold / double / chord counts, and a short jingle. The reward was already added to the Bank once, in
+// hold / chord counts, and a short jingle. The reward was already added to the Bank once, in
 // game.js, when the song ended; this screen only animates it, so leaving and coming back can never add it again.
 
 import { DifficultyConfig } from "../game/difficulty.js";
@@ -25,7 +25,7 @@ export function enter(run) {
   $("res-stars").setAttribute("aria-label", `${run.stars} of 3 stars`);
   $("res-accuracy").textContent = `${run.accuracy.toFixed(1)}%`;
   $("res-combo").textContent = run.maxCombo;
-  for (const k of ["perfect", "great", "good", "miss"]) $(`res-${k}`).textContent = run.counts[k];
+  for (const k of ["hit", "miss"]) $(`res-${k}`).textContent = run.counts[k];
   $("res-holds").textContent = run.holds;
   $("res-chords").textContent = run.chords;
   revealStars(run.stars);

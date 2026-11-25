@@ -6,10 +6,10 @@
 export const DIFFICULTY_ORDER = ["easy", "normal", "hard"];
 
 export const DifficultyConfig = {
-  easy:   { label: "Easy",   scrollSpeed: 0.45, tileScale: 2.0, windowScale: 1.8, bankMultiplier: 1.0, stars: { two: 0.45, three: 0.75 } },
-  normal: { label: "Normal", scrollSpeed: 0.55, tileScale: 1.3, windowScale: 1.0,  bankMultiplier: 1.5, stars: { two: 0.55, three: 0.8 } },
-  hard:   { label: "Hard",   scrollSpeed: 1.0, tileScale: 1.0, windowScale: 0.6, bankMultiplier: 3.0, stars: { two: 0.7, three: 0.92 },
-          penalty: { miss: 20, wrong: 12, heal: 1, scoreMiss: 100, scoreWrong: 60 } },
+  easy:   { label: "Easy",   scrollSpeed: 0.45, tileScale: 2.0, bankMultiplier: 1.0, stars: { two: 0.45, three: 0.75 } },
+  normal: { label: "Normal", scrollSpeed: 0.55, tileScale: 1.3, bankMultiplier: 1.5, stars: { two: 0.55, three: 0.8 } },
+  hard:   { label: "Hard",   scrollSpeed: 1.0, tileScale: 1.0, bankMultiplier: 3.0, stars: { two: 0.7, three: 0.92 },
+          penalty: { miss: 20, wrong: 12, heal: 1, scoreMiss: 1, scoreWrong: 1 } },
 };
 
 /** 1 to 3 stars for a finished run. */
@@ -19,7 +19,9 @@ export function starsFor(score, maxScore, difficulty) {
   return ratio >= three ? 3 : ratio >= two ? 2 : 1;
 }
 
-/** Coins this run would earn: (score / 10, rounded down) x multiplier, rounded down. Not added to the Bank yet. */
+const COINS_PER_POINT = 15; // keeps earnings near the old points-based scale
+
+/** Coins this run would earn: score x coins per point x multiplier, rounded down. Not added to the Bank yet. */
 export function bankReward(score, difficulty) {
-  return Math.floor(Math.floor(score / 10) * DifficultyConfig[difficulty].bankMultiplier);
+  return Math.floor(score * COINS_PER_POINT * DifficultyConfig[difficulty].bankMultiplier);
 }
