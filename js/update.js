@@ -60,6 +60,10 @@ export async function initUpdates(isBusy) {
     if (reg.waiting && navigator.serviceWorker.controller) offer(reg.waiting);
     if (reg.installing) watch(reg.installing);
     reg.addEventListener("updatefound", () => reg.installing && watch(reg.installing));
+    // A home screen app is usually resumed rather than reloaded, so also check each time it returns to the foreground.
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) reg.update().catch(() => {}); // offline: try again next time
+    });
   } catch (err) {
     console.warn("Service worker registration failed:", err.message);
   }
