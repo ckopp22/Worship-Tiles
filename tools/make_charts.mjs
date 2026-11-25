@@ -2,11 +2,14 @@
 //   node tools/make_charts.mjs [song-id]        (default: amazing-grace)
 // Reads  tools/data/<id>.notes.json   (MIDI-derived, or estimated from audio by tools/analyze_song.mjs)
 // Writes songs/charts/<id>-{easy,normal,hard}.json (MDD 6.4 format, times in seconds of the shipped audio).
+// Every note starts (and every hold ends) on a beat. MIDI songs use the exact tempo grid; audio-derived songs use
+// beats tracked in the shipped audio (needs macOS afconvert).
 // Deterministic: the same input always gives the same charts.
 
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { decode, onsetEnvelope, trackBeats } from "./lib/audio_analysis.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SONG_ID = process.argv[2] || "amazing-grace";
@@ -17,7 +20,6 @@ const HOLD_TRIM = 0.1;          // hold duration = note length - this
 const DOUBLE_GAP = 0.5;         // consecutive short notes closer than this (same pitch or lane) -> one doubleTap
 const LONG_NOTE = 2.0;          // notes this long always count as phrase endings
 const EXPERT_CHORD_EVERY = 5;   // Expert: every Nth plain melody note becomes a two-finger chord
-const EXPERT_SPLIT_GAP = 0.55;  // Expert: melody gaps at least this long get an extra off-beat tap halfway
 const EXPERT_MIN_GAP = 0.2;     // Expert: harmony taps are only added at least this far (seconds) from every other note
 const NORMAL_DOUBLE_EVERY = 3;  // Normal: every Nth eligible eighth pair becomes a doubleTap, the rest drop the off-beat note
 // Seconds to add to MIDI times to get MP3 times, for MIDI-derived songs only. Amazing Grace's notes.json says
@@ -25,7 +27,6 @@ const NORMAL_DOUBLE_EVERY = 3;  // Normal: every Nth eligible eighth pair become
 // the first MIDI note (1.33 s), steady across the song (spread ~3 ms, no drift). Audio-derived songs are measured on
 // the shipped audio and set audioOffsetSeconds = 0 instead. This one constant is applied to every note.
 const AUDIO_OFFSET_SECONDS = 0.04;
-const RELEASE_GAP = 0.1;        // a hold must end at least this long before the next note in any of its lanes
 
 const round3 = (x) => Math.round(x * 1000) / 1000;
 const near = (a, b, tol = 0.05) => Math.abs(a - b) < tol;
@@ -38,14 +39,16 @@ if (data.leadInSeconds !== undefined && data.leadInSeconds !== lead && data.audi
 }
 const BPM = data.bpm ?? 90;
 const BEAT = 60 / BPM;
-// MIDI-derived songs sit exactly on the beat grid: every start / end is snapped to a beat subdivision.
-// Audio-derived songs (source "audio-onsets") keep their measured times.
 const MIDI_GRID = data.source !== "audio-onsets";
-let SUB = 2; // subdivisions per beat for the difficulty being built (2 = half beat, 4 = quarter beat)
-/** Snap a chart time (seconds of the shipped audio) to the nearest 1/sub beat, converted back to seconds. */
-const snap = (t, sub = SUB) => (MIDI_GRID ? round3(lead + (Math.round(((t - lead) / BEAT) * sub) / sub) * BEAT) : t);
-/** Hold length: start and end both snapped (end to a beat or half beat); audio-derived songs keep the old trim. */
-const holdLen = (n) => (MIDI_GRID ? round3(snap(n.time + n.len, 2) - snap(n.time)) : round3(n.len - HOLD_TRIM));
+/** Beat times in seconds of the shipped audio. */
+function findBeats() {
+  const end = Math.max(...data.tracks.flatMap((t) => t.notes.map((n) => n.end))) + lead;
+  if (MIDI_GRID) return Array.from({ length: Math.ceil((end - lead) / BEAT) + 1 }, (_, k) => round3(lead + k * BEAT));
+  const catalog = JSON.parse(fs.readFileSync(path.join(ROOT, "songs/songs.json"), "utf8")).songs;
+  const audio = path.join(ROOT, catalog.find((s) => s.id === SONG_ID).audio);
+  return trackBeats(onsetEnvelope(decode(audio)), BPM).map((t) => round3(t + lead));
+}
+const holdLen = (n) => round3(n.len - HOLD_TRIM);
 const BEATS_PER_BAR = data.beatsPerBar ?? 3;
 const BAR = BEAT * BEATS_PER_BAR;
 const PHRASE = BAR * 4;                   // phrases are 4 bars; used for phrase endings when phraseGrid is on
@@ -124,11 +127,11 @@ function adjacentLane(n) {
 }
 
 // ---- note builders ----
-const tap = (n, lane = n.lane) => ({ time: snap(n.time), lane, type: "tap" });
-const hold = (n, lane = n.lane) => ({ time: snap(n.time), lane, type: "hold", duration: holdLen(n) });
-const double = (n) => ({ time: snap(n.time), lane: n.lane, type: "doubleTap" });
+const tap = (n, lane = n.lane) => ({ time: n.time, lane, type: "tap" });
+const hold = (n, lane = n.lane) => ({ time: n.time, lane, type: "hold", duration: holdLen(n) });
+const double = (n) => ({ time: n.time, lane: n.lane, type: "doubleTap" });
 const chord = (n, second, withHold) => {
-  const note = { time: snap(n.time), lanes: [n.lane, second], type: "chord" };
+  const note = { time: n.time, lanes: [n.lane, second], type: "chord" };
   if (withHold) note.duration = holdLen(n);
   return note;
 };
@@ -149,27 +152,12 @@ function buildHard() {
   const extras = [];
   harmonyTracks.forEach((track, k) => {
     for (const h of track.notes) {
-      const time = snap(round3(h.start + lead)), lane = laneFor(h.pitch, harmonyRanges[k]);
+      const time = round3(h.start + lead), lane = laneFor(h.pitch, harmonyRanges[k]);
       if (starts.some((s) => Math.abs(s - time) < EXPERT_MIN_GAP)) continue;
       if (holds.some((o) => o.lanes.includes(lane) && time > o.s - 0.1 && time < o.e + 0.1)) continue;
       starts.push(time);
       extras.push({ time, lane, type: "tap" });
     }
-  });
-  // Off-beat taps: where two melody notes are far apart, add a tap halfway between them (alternating lanes).
-  let flip = 0;
-  melody.forEach((n, i) => {
-    const next = melody[i + 1];
-    if (!next || isLong(n)) return;
-    const gap = next.time - n.time;
-    if (gap < EXPERT_SPLIT_GAP) return;
-    const time = snap(round3(n.time + gap / 2));
-    const lane = Math.max(0, Math.min(3, n.lane + (flip++ % 2 ? 1 : -1) * (n.lane === 0 ? -1 : 1)));
-    if (lane === n.lane || lane === next.lane) return;
-    if (starts.some((s) => Math.abs(s - time) < EXPERT_MIN_GAP)) return;
-    if (holds.some((o) => o.lanes.includes(lane) && time > o.s - 0.1 && time < o.e + 0.1)) return;
-    starts.push(time);
-    extras.push({ time, lane, type: "tap" });
   });
   return out.concat(extras);
 }
@@ -253,73 +241,60 @@ function buildEasy() {
 /** Hard is taps only: holds become taps, chords become one tap per lane, doubleTaps become taps. */
 const tapify = (notes) => notes.flatMap((n) => (n.lanes ? n.lanes.map((lane) => ({ time: n.time, lane, type: "tap" })) : [{ time: n.time, lane: n.lane, type: "tap" }]));
 
-/** Hard: fill silent-for-the-player stretches (sustained notes, long gaps) with taps while the music is still sounding. */
-const FILL_GAP = 0.8;     // gaps between taps longer than this get filler taps
-const FILL_SPACING = 0.5; // aim for about one filler tap per this many seconds
+// ---- beats ----
+const BEATS = findBeats();
+const nearestBeat = (t) => BEATS.reduce((best, b, i) => (Math.abs(b - t) < Math.abs(BEATS[best] - t) ? i : best), 0);
+const lanesOf = (n) => n.lanes ?? [n.lane];
 const sounding = (t) => tracks.some((tr) => tr.notes.some((x) => x.start <= t - lead + 0.02 && x.end > t - lead));
-function fillGaps(notes) {
-  notes.sort((x, y) => x.time - y.time);
-  const times = [...new Set(notes.map((x) => x.time))];
-  const laneAt = new Map(notes.map((x) => [x.time, x.lane]));
-  const extra = [];
-  let flip = 0;
-  for (let i = 0; i + 1 < times.length; i++) {
-    const a = times[i], z = times[i + 1], gap = z - a;
-    if (gap <= FILL_GAP) continue;
-    const slots = Math.round(gap / FILL_SPACING);
-    let prev = laneAt.get(a);
-    for (let k = 1; k < slots; k++) {
-      const time = snap(round3(a + (gap * k) / slots));
-      if (time - a < 0.2 || z - time < 0.2 || !sounding(time)) continue;
-      const choices = [0, 1, 2, 3].filter((l) => l !== prev && l !== laneAt.get(z));
-      const lane = choices[(flip++ + k) % choices.length];
-      extra.push({ time, lane, type: "tap" });
-      prev = lane;
-    }
-  }
-  return notes.concat(extra);
-}
 
-/** Keep the snapped chart playable: holds release before the next note in their lanes; same-lane collisions are dropped. */
-function finalize(notes) {
-  if (!MIDI_GRID) return notes;
-  notes.sort((a, b) => a.time - b.time);
-  const lanesOf = (n) => n.lanes ?? [n.lane];
-  const log = [];
-  for (const h of notes) {
-    if (!h.duration) continue;
-    let end = h.time + h.duration;
-    for (const o of notes) {
-      if (o === h || o.time <= h.time || !lanesOf(o).some((l) => lanesOf(h).includes(l))) continue;
-      if (o.time < end + RELEASE_GAP - 1e-6) end = Math.min(end, o.time - RELEASE_GAP);
-    }
-    if (end < h.time + h.duration - 1e-6) {
-      const half = BEAT / 2; // shorten onto the half-beat grid
-      const snapped = round3(lead + Math.floor(((end - lead) / BEAT) * 2 + 1e-6) * half);
-      const dur = round3(snapped - h.time);
-      log.push(`hold at ${h.time} shortened ${h.duration} -> ${dur}`);
-      h.duration = dur;
-      if (dur < half - 1e-6) log.push(`  WARNING: hold at ${h.time} is now shorter than a half beat`);
-    }
-  }
-  const out = [];
+/** Move notes onto beats, one per beat: holds and chords win, then the note closest to the beat.
+ *  Hard keeps both taps of a split chord, and gets a tap on every other beat where the music is sounding. */
+function onBeats(notes, difficulty) {
+  const slots = new Map(); // beat index -> candidate notes
   for (const n of notes) {
-    const clash = out.find((o) => lanesOf(o).some((l) => lanesOf(n).includes(l)) && Math.abs(o.time - n.time) < 0.25 + 1e-6 && (o.time === n.time));
-    if (clash) { log.push(`dropped ${JSON.stringify(n)} (same time and lane as ${JSON.stringify(clash)})`); continue; }
-    out.push(n);
+    const i = nearestBeat(n.time);
+    if (!slots.has(i)) slots.set(i, []);
+    slots.get(i).push(n);
   }
-  log.forEach((l) => console.log("    " + l));
-  return out;
+  const rank = (n) => (n.duration ? 2 : 0) + (n.lanes ? 1 : 0);
+  const picked = new Map();
+  for (const [i, list] of slots) {
+    const off = (n) => Math.abs(n.time - BEATS[i]);
+    const best = list.slice().sort((a, b) => rank(b) - rank(a) || off(a) - off(b))[0];
+    picked.set(i, difficulty === "hard" ? list.filter((n) => n.time === best.time) : [best]);
+  }
+  if (difficulty === "hard") {
+    const used = [...picked.keys()];
+    let flip = 0;
+    for (let i = Math.min(...used), prev = -1; i <= Math.max(...used); i++) {
+      if (!picked.has(i) && sounding(BEATS[i])) {
+        const next = picked.get(i + 1) ?? [];
+        const choices = [0, 1, 2, 3].filter((l) => l !== prev && !next.some((n) => n.lane === l));
+        picked.set(i, [{ lane: choices[flip++ % choices.length], type: "tap" }]);
+      }
+      prev = picked.get(i)?.[0].lane ?? prev;
+    }
+  }
+  const order = [...picked.keys()].sort((a, b) => a - b);
+  return order.flatMap((i) => picked.get(i).map((n) => {
+    const note = { ...n, time: BEATS[i] };
+    if (!n.duration) return note;
+    // a hold ends on a beat, at least one beat before the next note in its lanes; too short becomes a tap
+    let end = Math.min(BEATS.length - 1, Math.max(i + 1, nearestBeat(n.time + n.duration)));
+    const next = order.find((j) => j > i && picked.get(j).some((o) => lanesOf(o).some((l) => lanesOf(n).includes(l))));
+    if (next !== undefined) end = Math.min(end, next - 1);
+    if (end > i) note.duration = round3(BEATS[end] - BEATS[i]);
+    else { delete note.duration; if (note.type === "hold") note.type = "tap"; }
+    return note;
+  }));
 }
 
 // ---- write ----
-const SUBDIVISIONS = { easy: 2, normal: 2, hard: 4 };
 const builders = { easy: buildEasy, normal: buildNormal, hard: buildHard };
 fs.mkdirSync(path.join(ROOT, "songs/charts"), { recursive: true });
 console.log(`${SONG_ID}: ${melody.length} source notes, pitch range ${melodyRange.lo}-${melodyRange.hi}, ${BPM} bpm, ${BEATS_PER_BAR}/4`);
 for (const [difficulty, build] of Object.entries(builders)) {
-  SUB = SUBDIVISIONS[difficulty];
-  const notes = finalize(difficulty === "hard" ? fillGaps(tapify(build())) : build()).sort((a, b) => a.time - b.time);
+  const notes = onBeats(difficulty === "hard" ? tapify(build()) : build(), difficulty);
   const body = notes.map((n) => "    " + JSON.stringify(n)).join(",\n"); // one note per line
   const text = `{\n  "songId": "${SONG_ID}",\n  "difficulty": "${difficulty}",\n  "notes": [\n${body}\n  ]\n}\n`;
   fs.writeFileSync(path.join(ROOT, `songs/charts/${SONG_ID}-${difficulty}.json`), text);

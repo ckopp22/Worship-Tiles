@@ -212,3 +212,28 @@ export function estimateGrid(onsets, duration) {
   }
   return { bpm: Math.round(bpm * 10) / 10, beatsPerBar: bar.k, gridOrigin: phaseBest.phase + bar.offset * beat };
 }
+
+// ---------- beat tracking ----------
+const BEAT_TIGHTNESS = 100; // higher = beats stick closer to the nominal tempo
+
+/** Beat times that follow the audio (dynamic programming over the onset envelope), so tempo drift is tracked. */
+export function trackBeats(env, bpm) {
+  const period = (60 / bpm) * (SR / HOP);
+  const mean = env.reduce((a, b) => a + b, 0) / env.length;
+  const sd = Math.sqrt(env.reduce((a, b) => a + (b - mean) ** 2, 0) / env.length) || 1;
+  const score = new Float64Array(env.length), back = new Int32Array(env.length).fill(-1);
+  for (let t = 0; t < env.length; t++) {
+    let best = 0, from = -1;
+    for (let p = Math.max(0, t - Math.round(period * 2)); p <= t - Math.round(period / 2); p++) {
+      const s = score[p] - BEAT_TIGHTNESS * Math.log((t - p) / period) ** 2;
+      if (s > best) { best = s; from = p; }
+    }
+    score[t] = env[t] / sd + best;
+    back[t] = from;
+  }
+  let k = env.length - 1;
+  for (let t = Math.max(0, env.length - Math.round(period)); t < env.length; t++) if (score[t] > score[k]) k = t;
+  const beats = [];
+  for (; k >= 0; k = back[k]) beats.push(frameTime(k));
+  return beats.reverse();
+}
