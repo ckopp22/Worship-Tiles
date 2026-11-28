@@ -245,10 +245,10 @@ const tapify = (notes) => notes.flatMap((n) => (n.lanes ? n.lanes.map((lane) => 
 const BEATS = findBeats();
 const nearestBeat = (t) => BEATS.reduce((best, b, i) => (Math.abs(b - t) < Math.abs(BEATS[best] - t) ? i : best), 0);
 const lanesOf = (n) => n.lanes ?? [n.lane];
-const sounding = (t) => tracks.some((tr) => tr.notes.some((x) => x.start <= t - lead + 0.02 && x.end > t - lead));
 
-/** Move notes onto beats, one per beat: holds and chords win, then the note closest to the beat.
- *  Hard keeps both taps of a split chord, and gets a tap on every other beat where the music is sounding. */
+/** Lay notes out as a constant stream, one row per beat with no gaps: a row is a tap, a chord (Hard keeps both
+ *  taps of a split chord), or a hold that fills every beat up to the next row. Holds and chords win a shared beat,
+ *  then the note closest to it. Neighbouring rows never reuse a lane, so back-to-back tiles stay distinct. */
 function onBeats(notes, difficulty) {
   const slots = new Map(); // beat index -> candidate notes
   for (const n of notes) {
@@ -257,36 +257,38 @@ function onBeats(notes, difficulty) {
     slots.get(i).push(n);
   }
   const rank = (n) => (n.duration ? 2 : 0) + (n.lanes ? 1 : 0);
-  const picked = new Map();
-  for (const [i, list] of slots) {
+  const last = Math.max(...slots.keys());
+  const out = [];
+  let prev = [], flip = 0;
+  for (let i = Math.min(...slots.keys()); i <= last; ) {
     const off = (n) => Math.abs(n.time - BEATS[i]);
-    const best = list.slice().sort((a, b) => rank(b) - rank(a) || off(a) - off(b))[0];
-    picked.set(i, difficulty === "hard" ? list.filter((n) => n.time === best.time) : [best]);
-  }
-  if (difficulty === "hard") {
-    const used = [...picked.keys()];
-    let flip = 0;
-    for (let i = Math.min(...used), prev = -1; i <= Math.max(...used); i++) {
-      if (!picked.has(i) && sounding(BEATS[i])) {
-        const next = picked.get(i + 1) ?? [];
-        const choices = [0, 1, 2, 3].filter((l) => l !== prev && !next.some((n) => n.lane === l));
-        picked.set(i, [{ lane: choices[flip++ % choices.length], type: "tap" }]);
-      }
-      prev = picked.get(i)?.[0].lane ?? prev;
+    const list = (slots.get(i) ?? []).slice().sort((a, b) => rank(b) - rank(a) || off(a) - off(b));
+    let row = difficulty === "hard" ? list.filter((n) => n.time === list[0].time).slice(0, 2) : list.slice(0, 1);
+    if (!row.length) row = [{ lane: (prev[0] ?? 0) + 1 + (flip++ % 3), type: "tap" }];
+    let next = i + 1;
+    if (row[0].duration) { // a hold spans at least two beats and ends where the next row starts
+      const end = Math.min(BEATS.length - 1, nearestBeat(row[0].time + row[0].duration));
+      while (next < end && !slots.has(next)) next++;
+      if (next < end && next - i < 2) next++;
     }
+    const used = [];
+    for (const n of row) {
+      const note = { ...n, time: BEATS[i] };
+      const free = (l) => !prev.includes(l) && !used.includes(l);
+      const lanes = lanesOf(n).map((want) => {
+        const lane = [0, 1, 2, 3].map((d) => (want + d) % 4).find(free);
+        used.push(lane);
+        return lane;
+      });
+      if (note.lanes) note.lanes = lanes; else note.lane = lanes[0];
+      if (next - i >= 2) note.duration = round3(BEATS[next] - BEATS[i]);
+      else { delete note.duration; if (note.type === "hold") note.type = "tap"; }
+      out.push(note);
+    }
+    prev = used;
+    i = next;
   }
-  const order = [...picked.keys()].sort((a, b) => a - b);
-  return order.flatMap((i) => picked.get(i).map((n) => {
-    const note = { ...n, time: BEATS[i] };
-    if (!n.duration) return note;
-    // a hold ends on a beat, at least one beat before the next note in its lanes; too short becomes a tap
-    let end = Math.min(BEATS.length - 1, Math.max(i + 1, nearestBeat(n.time + n.duration)));
-    const next = order.find((j) => j > i && picked.get(j).some((o) => lanesOf(o).some((l) => lanesOf(n).includes(l))));
-    if (next !== undefined) end = Math.min(end, next - 1);
-    if (end > i) note.duration = round3(BEATS[end] - BEATS[i]);
-    else { delete note.duration; if (note.type === "hold") note.type = "tap"; }
-    return note;
-  }));
+  return out;
 }
 
 // ---- write ----

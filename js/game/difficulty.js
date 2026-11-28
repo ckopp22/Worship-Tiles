@@ -5,10 +5,11 @@
 
 export const DIFFICULTY_ORDER = ["easy", "normal", "hard"];
 
+// tileHeight: screen heights one beat covers, which also sets the scroll speed for the song's tempo.
 export const DifficultyConfig = {
-  easy:   { label: "Easy",   scrollSpeed: 0.45, tileScale: 2.0, bankMultiplier: 1.0, stars: { two: 0.45, three: 0.75 } },
-  normal: { label: "Normal", scrollSpeed: 0.55, tileScale: 1.3, bankMultiplier: 1.5, stars: { two: 0.55, three: 0.8 } },
-  hard:   { label: "Hard",   scrollSpeed: 1.0, tileScale: 1.0, bankMultiplier: 3.0, stars: { two: 0.7, three: 0.92 },
+  easy:   { label: "Easy",   tileHeight: 0.22, bankMultiplier: 1.0, stars: { two: 0.45, three: 0.75 } },
+  normal: { label: "Normal", tileHeight: 0.25, bankMultiplier: 1.5, stars: { two: 0.55, three: 0.8 } },
+  hard:   { label: "Hard",   tileHeight: 0.29, bankMultiplier: 3.0, stars: { two: 0.7, three: 0.92 },
           penalty: { miss: 20, wrong: 12, heal: 1, scoreMiss: 1, scoreWrong: 1 } },
 };
 

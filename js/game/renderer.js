@@ -1,43 +1,34 @@
-// Canvas rendering for the gameplay screen: layout, pre-rendered sprites, notes (tap / hold / double /
-// chord), floating labels and the HUD. Pools are preallocated so frames create no objects.
+// Canvas rendering for the gameplay screen: layout, back-to-back tiles (tap / hold), floating labels and the HUD.
+// Pools are preallocated so frames create no objects.
 
 import { state } from "../state.js";
 import { LANE_COUNT, Kind, NoteState } from "./notes.js";
 
-const HIT_LINE_FROM_BOTTOM = 0.17; // fraction of screen height, measured above the bottom safe area
-const SERIF = '"Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif';
+const HIT_LINE_FROM_BOTTOM = 0.25; // fraction of screen height, measured above the bottom safe area
 const SANS = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
-const TILE_COLORS = ["#f6dc9a", "#f3c9a8", "#b9d2f5", "#bfe3c8"]; // muted stained-glass tints
-
-const LABELS = {
-  miss: { text: "Miss", color: "#e58a8a" },
-};
 const TEXT_LIFE = 0.7, FLASH_LIFE = 0.25;
-const MAX_TEXTS = 10;
-const BANNER_LIFE = 1.2, MOTE_COUNT = 26;
+const MAX_TEXTS = 10, BANNER_LIFE = 1.2, MOTE_COUNT = 26;
 const TAPPED_ALPHA = 0.22; // a tapped tile stays on its way down, faded
 
 let canvas, g, probe;
 let W = 0, H = 0, dpr = 1, safeTop = 0, safeBottom = 0;
-let laneW = 0, hitY = 0, speed = 0, tileW = 0, tileH = 0, offscreenTime = 0;
-let scrollScreens = 0.55, tileScale = 1;
+let laneW = 0, hitY = 0, speed = 0;
+let beatFraction = 0.25, beatSeconds = 0.6; // screen heights and seconds per beat
 let bgCanvas = null, flashCanvas = null, flashH = 0;
-const tileSprites = [], doubleSprites = [];
-const spritePad = 12;
+let tapFill = null, holdFill = null; // unit-height gradients, scaled to each tile
 
 let field = null, judge = null, firstVisible = 0;
 let scoreStr = "0", scoreVal = 0, comboStr = "", comboVal = 0;
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 const laneFlash = new Array(LANE_COUNT).fill(-10);
-const texts = Array.from({ length: MAX_TEXTS }, () => ({ on: false, label: null, x: 0, t0: 0, level: 0 }));
+const texts = Array.from({ length: MAX_TEXTS }, () => ({ on: false, text: "", x: 0, t0: 0 }));
 let textNext = 0;
-
 const banner = { on: false, text: "", t0: 0 };
 
-// drifting gold dust: fixed fractions (no randomness), positions computed from song time each frame
+// drifting sparkles: fixed fractions (no randomness), positions computed from song time each frame
 const motes = Array.from({ length: MOTE_COUNT }, (_, i) => ({
-  fx: (i * 0.618034) % 1, fy: (i * 0.381966 + 0.13) % 1, speed: 6 + (i % 5) * 3, r: 1 + (i % 3) * 0.6, phase: i,
+  fx: (i * 0.618034) % 1, fy: (i * 0.381966 + 0.13) % 1, speed: 6 + (i % 5) * 3, r: 1 + (i % 3) * 0.9, phase: i,
 }));
 
 // ======================= setup =======================
@@ -63,26 +54,20 @@ export function resize() {
   safeBottom = parseFloat(cs.paddingBottom) || 0;
   laneW = W / LANE_COUNT;
   hitY = H - safeBottom - H * HIT_LINE_FROM_BOTTOM;
-  tileW = laneW - 16;
-  tileH = Math.max(34, laneW * 0.42) * tileScale;
   applySpeed();
   buildBackground();
-  buildSprites();
   return true;
 }
 
-/** Scroll speed in screen heights per second (from DifficultyConfig). */
-export function setScrollSpeed(screensPerSecond, scale = 1) {
-  scrollScreens = screensPerSecond;
-  const rescale = scale !== tileScale;
-  tileScale = scale;
-  if (H && rescale) { tileH = Math.max(34, laneW * 0.42) * tileScale; buildSprites(); }
+/** `fraction` screen heights scroll past per beat of `seconds`. */
+export function setTempo(fraction, seconds) {
+  beatFraction = fraction;
+  beatSeconds = seconds;
   if (H) applySpeed();
 }
 
 function applySpeed() {
-  speed = H * scrollScreens;
-  offscreenTime = (H - hitY + tileH) / speed;  // seconds for a tile to leave the bottom after the line
+  speed = (H * beatFraction) / beatSeconds;
 }
 
 /** Attach the current run's notes and judge; clears all effects. */
@@ -90,6 +75,12 @@ export function bindRun(fieldRef, judgeRef) {
   field = fieldRef;
   judge = judgeRef;
   firstVisible = 0;
+  const notes = field.notes; // sorted by time: each tile reaches up to where the next row starts
+  for (let i = notes.length - 1, next = null; i >= 0; i--) {
+    const n = notes[i], after = notes[i + 1];
+    if (after && after.time - n.time > 0.001) next = after.time;
+    n.span = next === null ? Math.max(n.duration, beatSeconds) : next - n.time;
+  }
   scoreStr = "0"; scoreVal = 0; comboStr = ""; comboVal = 0;
   laneFlash.fill(-10);
   texts.forEach((x) => (x.on = false));
@@ -116,75 +107,49 @@ function roundRect(x, px, py, w, h, r) {
   x.closePath();
 }
 
-/** Static layer: gradient, lane dividers, glowing hit line, target rings; plus the lane flash sprite. */
+/** Static layer: bright gradient, diagonal stripes, hit line and lane dividers; plus the lane flash sprite and tile gradients. */
 function buildBackground() {
   let x;
   [bgCanvas, x] = makeLayer(W, H);
   const grad = x.createLinearGradient(0, 0, 0, H);
-  grad.addColorStop(0, "#060f2b");
-  grad.addColorStop(0.55, "#0f2250");
-  grad.addColorStop(1, "#1d2e58");
+  grad.addColorStop(0, "#b484c4");
+  grad.addColorStop(0.4, "#f27fdc");
+  grad.addColorStop(0.75, "#e6a8f2");
+  grad.addColorStop(1, "#a98ad0");
   x.fillStyle = grad;
   x.fillRect(0, 0, W, H);
-  const glow = x.createRadialGradient(W / 2, hitY, 0, W / 2, hitY, W);
-  glow.addColorStop(0, "rgba(242,196,96,.20)");
-  glow.addColorStop(1, "rgba(242,196,96,0)");
-  x.fillStyle = glow;
-  x.fillRect(0, 0, W, H);
-
-  x.strokeStyle = "rgba(251,243,220,.10)";
+  x.strokeStyle = "rgba(255,255,255,.07)";
+  x.lineWidth = laneW * 0.22;
+  for (let i = -H; i < W + H; i += laneW * 0.7) {
+    x.beginPath(); x.moveTo(i, 0); x.lineTo(i + H * 0.7, H); x.stroke();
+  }
+  x.fillStyle = "rgba(90,40,150,.14)";
+  x.fillRect(0, hitY, W, H - hitY);
+  x.shadowColor = "#fff";
+  x.shadowBlur = 14;
+  x.fillStyle = "rgba(255,255,255,.75)";
+  x.fillRect(0, hitY - 1, W, 2);
+  x.shadowBlur = 0;
+  x.strokeStyle = "rgba(255,255,255,.45)";
   x.lineWidth = 1;
   for (let i = 1; i < LANE_COUNT; i++) {
     x.beginPath(); x.moveTo(i * laneW, 0); x.lineTo(i * laneW, H); x.stroke();
   }
+
   flashH = H * 0.35;
   let fx;
   [flashCanvas, fx] = makeLayer(laneW, flashH);
   const fg = fx.createLinearGradient(0, 0, 0, flashH);
-  fg.addColorStop(0, "rgba(242,196,96,0)");
-  fg.addColorStop(1, "rgba(242,196,96,.4)");
+  fg.addColorStop(0, "rgba(255,255,255,0)");
+  fg.addColorStop(1, "rgba(255,255,255,.45)");
   fx.fillStyle = fg;
   fx.fillRect(0, 0, laneW, flashH);
 
+  tapFill = "#000";
+  holdFill = g.createLinearGradient(0, 0, 0, 1);
+  holdFill.addColorStop(0, "#4aa8f5");
+  holdFill.addColorStop(1, "#02060c");
 }
-
-/** One glowing rounded tile per lane, plus a "2" variant for double-taps. */
-function buildSprites() {
-  tileSprites.length = 0;
-  doubleSprites.length = 0;
-  for (let i = 0; i < LANE_COUNT; i++) {
-    for (const withTwo of [false, true]) {
-      const [c, x] = makeLayer(tileW + spritePad * 2, tileH + spritePad * 2);
-      x.shadowColor = TILE_COLORS[i];
-      x.shadowBlur = 12;
-      const grad = x.createLinearGradient(0, spritePad, 0, spritePad + tileH);
-      grad.addColorStop(0, "#fffaf0");
-      grad.addColorStop(1, TILE_COLORS[i]);
-      x.fillStyle = grad;
-      roundRect(x, spritePad, spritePad, tileW, tileH, 10);
-      x.fill();
-      x.shadowBlur = 0;
-      x.strokeStyle = "rgba(255,255,255,.7)";
-      x.lineWidth = 1.5;
-      x.stroke();
-      if (withTwo) {
-        const cx = spritePad + tileW / 2, cy = spritePad + tileH / 2;
-        x.strokeStyle = "rgba(42,28,5,.55)";
-        x.lineWidth = 2;
-        x.beginPath(); x.arc(cx, cy, tileH * 0.36, 0, Math.PI * 2); x.stroke(); // twin-ring marker
-        x.beginPath(); x.arc(cx, cy, tileH * 0.25, 0, Math.PI * 2); x.stroke();
-        x.fillStyle = "#2a1c05";
-        x.font = `700 ${Math.round(tileH * 0.42)}px ${SERIF}`;
-        x.textAlign = "center";
-        x.textBaseline = "middle";
-        x.fillText("2", cx, cy + 1);
-      }
-      (withTwo ? doubleSprites : tileSprites).push(c);
-    }
-  }
-}
-
-// ======================= effects =======================
 
 export function flashLane(lane, t) { laneFlash[lane] = t; }
 
@@ -200,10 +165,10 @@ function drawDanger(t) {
   if (a > 0) { g.globalAlpha = a; g.fillStyle = "#e03030"; g.fillRect(0, 0, W, H); g.globalAlpha = 1; }
 }
 
-/** Floating label centered on `x` (px). level 1 floats above level 0 so bonuses don't overlap grades. */
-export function spawnLabel(key, x, t, level) {
+/** Floating label centered on `x` (px), rising from the hit line. */
+export function spawnLabel(text, x, t) {
   const slot = texts[textNext++ % MAX_TEXTS];
-  slot.on = true; slot.label = LABELS[key]; slot.x = x; slot.t0 = t; slot.level = level;
+  slot.on = true; slot.text = text; slot.x = x; slot.t0 = t;
 }
 
 /** Brief banner such as "10 combo!". */
@@ -211,8 +176,8 @@ export function showBanner(text, t) {
   banner.on = true; banner.text = text; banner.t0 = t;
 }
 
-/** Seconds before and after its note time that a tile is on screen. */
-export const visibleWindow = () => ({ early: (hitY + tileH / 2) / speed, late: (H - hitY + tileH / 2) / speed });
+/** Seconds before and after its note time that a tile may be tapped: from entering the top until half a beat past the bottom. */
+export const visibleWindow = () => ({ early: hitY / speed, late: (H - hitY) / speed + beatSeconds / 2 });
 
 export const laneX = (lane) => (lane + 0.5) * laneW;
 
@@ -236,7 +201,7 @@ let beatLen = 0, beatOrigin = 0;
 export function setBeatGrid(secondsPerBeat, offset) { beatLen = secondsPerBeat; beatOrigin = offset; }
 
 function drawBeatLines(t) {
-  const first = Math.ceil((t - offscreenTime - beatOrigin) / beatLen), last = Math.floor((t + hitY / speed - beatOrigin) / beatLen);
+  const first = Math.ceil((t - (H - hitY) / speed - beatOrigin) / beatLen), last = Math.floor((t + hitY / speed - beatOrigin) / beatLen);
   g.strokeStyle = "#7fe3ff"; g.lineWidth = 1; g.globalAlpha = 0.6;
   g.beginPath();
   for (let n = first; n <= last; n++) {
@@ -248,11 +213,11 @@ function drawBeatLines(t) {
 }
 
 function drawMotes(t) {
-  g.fillStyle = "#ffe2a0";
+  g.fillStyle = "#fff";
   for (let i = 0; i < MOTE_COUNT; i++) {
     const m = motes[i];
     const y = (((m.fy * H - t * m.speed) % H) + H) % H;
-    g.globalAlpha = 0.12 + 0.12 * Math.sin(t * 0.8 + m.phase);
+    g.globalAlpha = 0.35 + 0.3 * Math.sin(t * 0.8 + m.phase);
     g.beginPath();
     g.arc(m.fx * W + Math.sin(t * 0.3 + m.phase) * 10, y, m.r, 0, Math.PI * 2);
     g.fill();
@@ -270,75 +235,61 @@ function drawFlashes(t) {
   g.globalAlpha = 1;
 }
 
-const headY = (n, t) => hitY - (n.time - t) * speed;
-
+/** Tiles sit back to back: the bottom edge is the note time, the top edge is the next row. */
 function drawNotes(t) {
   const notes = field.notes;
-  // skip tiles (including long hold tails) that have fully scrolled off the bottom
-  while (firstVisible < notes.length && notes[firstVisible].end < t - offscreenTime) firstVisible++;
-  const pulse = 0.5 + 0.5 * Math.sin(t * 14);
-
-  // pass 1: chord bars and hold bodies sit behind the tiles
+  // skip tiles that have fully scrolled off the bottom
+  while (firstVisible < notes.length && notes[firstVisible].time + notes[firstVisible].span < t - (H - hitY) / speed) firstVisible++;
   for (let i = firstVisible; i < notes.length; i++) {
     const n = notes[i];
-    if ((n.time - t) * speed > hitY + tileH) break; // not on screen yet (sorted by head time)
-    if (n.state === NoteState.HIT) continue;
-    const y = headY(n, t);
-
-    if (n.group && n === n.group.tiles[0]) {
-      const o = n.group.tiles[1];
-      const live = (s) => s === NoteState.PENDING || s === NoteState.HELD;
-      if (live(n.state) && live(o.state)) {
-        g.lineCap = "round";
-        g.strokeStyle = "#f2c460";
-        g.globalAlpha = 0.28; g.lineWidth = 16;
-        g.beginPath(); g.moveTo(laneX(n.lane), y); g.lineTo(laneX(o.lane), y); g.stroke();
-        g.globalAlpha = 0.95; g.lineWidth = 5;
-        g.stroke();
-      }
-    }
-
-    if (n.kind === Kind.HOLD) {
-      const tailY = hitY - (n.end - t) * speed;
-      if (tailY >= y) continue;
-      const held = n.state === NoteState.HELD;
-      const missed = n.state === NoteState.MISSED;
-      const dim = missed || n.state === NoteState.BROKEN;
-      const a = dim ? 0.25 : 1;
-      const cx = laneX(n.lane), bw = tileW * 0.6;
-      g.fillStyle = TILE_COLORS[n.lane];
-      g.globalAlpha = a * (held ? 0.22 + 0.2 * pulse : 0.18);       // soft glow
-      roundRect(g, cx - tileW * 0.45, tailY - 6, tileW * 0.9, y - tailY + 6, 14); g.fill();
-      g.globalAlpha = a * (held ? 0.75 + 0.25 * pulse : 0.6);       // body
-      roundRect(g, cx - bw / 2, tailY, bw, y - tailY, 9); g.fill();
-      g.globalAlpha = a;                                            // glowing tail cap
-      g.fillStyle = "#fff6d8";
-      g.beginPath(); g.arc(cx, tailY + 3, bw * 0.3, 0, Math.PI * 2); g.fill();
-      if (held) { // lane glow while the hold is down
-        g.globalAlpha = 0.35 + 0.35 * pulse;
-        g.drawImage(flashCanvas, n.lane * laneW, H - flashH, laneW, flashH);
-      }
-    }
-  }
-
-  // pass 2: tile heads
-  const sw = tileW + spritePad * 2, sh = tileH + spritePad * 2;
-  for (let i = firstVisible; i < notes.length; i++) {
-    const n = notes[i];
-    if ((n.time - t) * speed > hitY + tileH) break;
-    const held = n.state === NoteState.HELD;
-    g.globalAlpha = n.state === NoteState.HIT || n.state === NoteState.BROKEN ? TAPPED_ALPHA
-      : n.state === NoteState.MISSED ? 0.4
-      : held ? 0.55 + 0.15 * pulse : 1;
-    const sprite = (n.kind === Kind.DOUBLE ? doubleSprites : tileSprites)[n.lane];
-    g.drawImage(sprite, n.lane * laneW + (laneW - sw) / 2, headY(n, t) - sh / 2, sw, sh);
+    const bottom = hitY - (n.time - t) * speed;
+    if (bottom < 0) break; // not on screen yet (sorted by time)
+    drawTile(n, n.lane * laneW, bottom - n.span * speed, n.span * speed);
   }
   g.globalAlpha = 1;
 }
 
+function drawTile(n, x, top, h) {
+  const hold = n.kind === Kind.HOLD;
+  const done = n.state === NoteState.HIT || n.state === NoteState.BROKEN;
+  g.globalAlpha = done ? TAPPED_ALPHA : 1;
+  g.save();
+  g.translate(x, top);
+  if (n.state === NoteState.MISSED) {
+    g.fillStyle = "rgba(230,50,70,.8)";
+    g.fillRect(0, 0, laneW, h);
+  } else {
+    g.scale(1, h);
+    g.fillStyle = hold ? holdFill : tapFill;
+    g.fillRect(0, 0, laneW, 1);
+  }
+  g.restore();
+  if (!hold || done || n.state === NoteState.MISSED) return;
+
+  const cx = x + laneW / 2, bottom = top + h;
+  if (n.state === NoteState.HELD) { // cyan fill rises from the bottom of the tile to the hit line
+    const fillTop = Math.max(top, Math.min(bottom - laneW, hitY - laneW / 2));
+    const r = Math.min(laneW / 2, (bottom - fillTop) / 2);
+    g.fillStyle = "#6ae6fb";
+    g.beginPath();
+    g.moveTo(x, bottom);
+    g.lineTo(x, fillTop + r);
+    g.ellipse(cx, fillTop + r, laneW / 2, r, 0, Math.PI, Math.PI * 2);
+    g.lineTo(x + laneW, bottom);
+    g.fill();
+  } else { // guide line down to the ring where the finger starts
+    const ringY = bottom - laneW * 0.55;
+    g.strokeStyle = "rgba(255,255,255,.85)";
+    g.lineWidth = 1.5;
+    g.beginPath(); g.moveTo(cx, top + 14); g.lineTo(cx, ringY - 11); g.stroke();
+    g.beginPath(); g.arc(cx, ringY, 11, 0, Math.PI * 2); g.stroke();
+  }
+}
+
 function drawEffects(t) {
   g.textAlign = "center";
-  g.font = `700 19px ${SERIF}`;
+  g.fillStyle = "#fff";
+  g.font = `700 30px ${SANS}`;
   for (let i = 0; i < MAX_TEXTS; i++) {
     const x = texts[i];
     if (!x.on) continue;
@@ -346,9 +297,7 @@ function drawEffects(t) {
     if (age > TEXT_LIFE) { x.on = false; continue; }
     if (age < 0) continue;
     g.globalAlpha = 1 - age / TEXT_LIFE;
-    g.fillStyle = x.label.color;
-    const cx = Math.max(60, Math.min(W - 60, x.x)); // keep wide labels on screen
-    g.fillText(x.label.text, cx, hitY - 36 - x.level * 26 - age * 40);
+    g.fillText(x.text, x.x, hitY - 36 - age * 60);
   }
   g.globalAlpha = 1;
   if (banner.on) {
@@ -357,45 +306,58 @@ function drawEffects(t) {
     else if (age >= 0) {
       const pop = age < 0.15 ? 0.8 + (age / 0.15) * 0.2 : 1; // quick pop-in, then fade
       g.globalAlpha = Math.min(1, (BANNER_LIFE - age) / 0.4);
-      g.fillStyle = "#ffe2a0";
-      g.font = `700 ${Math.round(34 * pop)}px ${SERIF}`;
-      g.textAlign = "center";
-      g.fillText(banner.text, W / 2, H * 0.3);
+      outlined(banner.text, W / 2, H * 0.33, Math.round(34 * pop));
       g.globalAlpha = 1;
     }
   }
 }
 
+/** White text with a soft shadow, readable over both tiles and background. */
+function outlined(str, x, y, size) {
+  g.textAlign = "center";
+  g.font = `700 ${size}px ${SANS}`;
+  g.lineJoin = "round";
+  g.lineWidth = 4;
+  g.strokeStyle = "rgba(60,20,90,.45)";
+  g.strokeText(str, x, y);
+  g.fillStyle = "#fff";
+  g.fillText(str, x, y);
+}
+
+function star(x, y, r, color) {
+  g.fillStyle = color;
+  g.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const a = (i * Math.PI) / 5 - Math.PI / 2, d = i % 2 ? r * 0.45 : r;
+    g.lineTo(x + Math.cos(a) * d, y + Math.sin(a) * d);
+  }
+  g.fill();
+}
+
 function drawHud(t) {
   if (judge.score !== scoreVal) { scoreVal = judge.score; scoreStr = scoreVal.toLocaleString(); }
-  if (judge.combo !== comboVal) { comboVal = judge.combo; comboStr = comboVal >= 2 ? `${comboVal} combo` : ""; }
+  if (judge.combo !== comboVal) { comboVal = judge.combo; comboStr = comboVal >= 2 ? `\u00d7 ${comboVal}` : ""; }
   const top = safeTop + 10;
-  g.textAlign = "left";
-  g.fillStyle = "#f2c460";
-  g.font = `600 26px ${SERIF}`;
-  g.fillText(scoreStr, 16, top + 28);
-  if (comboStr) {
-    g.textAlign = "center";
-    g.fillStyle = "#fbf3dc";
-    g.font = `600 16px ${SANS}`;
-    g.fillText(comboStr, W / 2, top + 26);
-  }
-  const barX = 16, barW = W - 32, barY = top + 54;
+  const barX = 16, barW = W - 96, barY = top + 20; // leaves room for the pause button
   const frac = Math.max(0, Math.min(1, t / (hudDuration || 1)));
-  g.fillStyle = "rgba(251,243,220,.2)";
-  roundRect(g, barX, barY, barW, 4, 2); g.fill();
-  if (frac > 0) { g.fillStyle = "#f2c460"; roundRect(g, barX, barY, Math.max(4, barW * frac), 4, 2); g.fill(); }
+  g.fillStyle = "rgba(255,255,255,.55)";
+  g.fillRect(barX, barY, barW, 3);
+  g.fillStyle = "#ffd54a";
+  g.fillRect(barX, barY, barW * frac, 3);
+  for (let i = 1; i <= 3; i++) star(barX + (barW * i) / 3, barY + 1.5, 10, frac >= i / 3 - 0.001 ? "#ffd54a" : "#fff");
   if (judge.penalty) { // health bar under the song progress bar
     const hf = judge.health / 100;
-    g.fillStyle = "rgba(251,243,220,.2)";
-    roundRect(g, barX, barY + 10, barW, 6, 3); g.fill();
-    if (hf > 0) { g.fillStyle = hf < 0.35 ? "#e03030" : "#7fcf8a"; roundRect(g, barX, barY + 10, Math.max(6, barW * hf), 6, 3); g.fill(); }
+    g.fillStyle = "rgba(255,255,255,.35)";
+    roundRect(g, barX, barY + 16, barW, 6, 3); g.fill();
+    if (hf > 0) { g.fillStyle = hf < 0.35 ? "#e03030" : "#58d87a"; roundRect(g, barX, barY + 16, Math.max(6, barW * hf), 6, 3); g.fill(); }
   }
+  outlined(scoreStr, W / 2, top + 90, 48);
+  if (comboStr) outlined(comboStr, W / 2, top + 118, 18);
   if (!state.settings.soundEnabled) {
     g.textAlign = "right";
-    g.fillStyle = "rgba(251,243,220,.7)";
+    g.fillStyle = "#fff";
     g.font = `12px ${SANS}`;
-    g.fillText("Sound off", W - 16, barY + 22);
+    g.fillText("Sound off", W - 16, barY + 40);
   }
 }
 
@@ -405,9 +367,6 @@ export function setSongDuration(seconds) { hudDuration = seconds; }
 /** Big 3-2-1 for the opening count-in and the resume countdown. */
 function drawBigNumber(n, frac) {
   g.globalAlpha = 1 - frac * 0.6;
-  g.textAlign = "center";
-  g.fillStyle = "#fff6d8";
-  g.font = `700 ${96 - frac * 12}px ${SERIF}`;
-  g.fillText(String(n), W / 2, H * 0.4);
+  outlined(String(n), W / 2, H * 0.45, Math.round(96 - frac * 12));
   g.globalAlpha = 1;
 }

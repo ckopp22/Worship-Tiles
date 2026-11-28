@@ -306,7 +306,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; }
   position: absolute;
   top: calc(env(safe-area-inset-top, 0px) + .5em);
   right: calc(env(safe-area-inset-right, 0px) + 1em);
-  color: var(--gold);
+  color: #fff;
 }
 .pause-btn[hidden], .overlay[hidden], .game-loading[hidden] { display: none; }
 .game-loading { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; font-family: var(--font-serif); font-size: 1.4em; color: var(--gold); }

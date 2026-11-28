@@ -86,7 +86,7 @@ async function startRun(my) {
   input.detach();
   field = createField(song.chart);
   judge = new Judge(field, difficulty, view.visibleWindow, onEvent);
-  view.setScrollSpeed(DifficultyConfig[difficulty].scrollSpeed, DifficultyConfig[difficulty].tileScale);
+  view.setTempo(DifficultyConfig[difficulty].tileHeight, 60 / song.bpm);
   view.setSongDuration(song.buffer.duration);
   view.bindRun(field, judge);
   prevCombo = 0;
@@ -214,10 +214,10 @@ function onEvent(type, note, key) {
       hitPulse();
       break;
     case "miss":
-      view.spawnLabel("miss", view.laneX(note.lane), t, 0);
       playMiss();
       break;
     case "bonus":
+      view.spawnLabel("+1", view.laneX(note.lane), t);
       holdPulse();
       break;
     case "break":
